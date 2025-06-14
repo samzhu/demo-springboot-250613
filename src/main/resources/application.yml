@@ -1,7 +1,9 @@
 spring:
   application:
     name: demo
-
+  threads:
+    virtual:
+      enabled: true
 server:
   shutdown: graceful
   error:

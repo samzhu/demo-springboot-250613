@@ -1,0 +1,64 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: otel-demo
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+  labels:
+    cloud.googleapis.com/location: asia-east1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '4'
+        autoscaling.knative.dev/minScale: '1'
+        run.googleapis.com/cpu-throttling: 'false'
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        run.googleapis.com/startupProbeType: Custom
+    spec:
+      containerConcurrency: 100
+      timeoutSeconds: 300
+      serviceAccountName: sa-a-flow-gent@${YOUR_PROJECT_ID}.iam.gserviceaccount.com
+      containers:
+      - name: otel-demo
+        image: asia-east1-docker.pkg.dev/${YOUR_PROJECT_ID}/aflowgent-repo/otel-demo:0.0.1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: spring.profiles.active
+          value: uat,gcp
+        - name: logging.level.com.example.otel
+          value: debug
+        - name: JAVA_TOOL_OPTIONS
+          value: -Djava.security.egd=file:/dev/./urandom -Dfile.encoding=UTF-8
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        startupProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 10
+          timeoutSeconds: 1
+      - name: otel-collector
+        image: asia-east1-docker.pkg.dev/${YOUR_PROJECT_ID}/aflowgent-repo/otel-collector:0.0.4
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+  traffic:
+  - percent: 100
+    latestRevision: true

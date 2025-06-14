@@ -12,7 +12,9 @@ import com.example.demo.infrastructure.repositories.BookRepository;
 import com.example.demo.models.Book;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor

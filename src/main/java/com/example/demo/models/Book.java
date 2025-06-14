@@ -49,39 +49,6 @@ public class Book implements Serializable {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
-    public Book() {}
-
-    public Book(Book value) {
-        this.id = value.id;
-        this.title = value.title;
-        this.author = value.author;
-        this.isbn = value.isbn;
-        this.publishYear = value.publishYear;
-        this.price = value.price;
-        this.createdAt = value.createdAt;
-        this.updatedAt = value.updatedAt;
-    }
-
-    public Book(
-        Integer id,
-        String title,
-        String author,
-        String isbn,
-        Integer publishYear,
-        BigDecimal price,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
-    ) {
-        this.id = id;
-        this.title = title;
-        this.author = author;
-        this.isbn = isbn;
-        this.publishYear = publishYear;
-        this.price = price;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     /**
      * Getter for <code>public.book.id</code>. 書本 ID，使用 SERIAL 自動產生遞增值
      */

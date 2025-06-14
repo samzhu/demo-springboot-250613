@@ -11,3 +11,23 @@ services:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+  # 監控
+  otel-lgtm:
+    image: 'grafana/otel-lgtm:latest'
+    ports:
+      - '3000:3000'  # Grafana UI
+      - '4317:4317'  # OpenTelemetry gRPC 端點
+      - '4318:4318'  # OpenTelemetry HTTP 端點
+    container_name: otel-lgtm
+    environment:
+      - 'OTEL_METRIC_EXPORT_INTERVAL=500'
+      - 'OTEL_LOGS_INCLUDE_FORMATTED_MESSAGE=true'
+      - 'ENABLE_LOGS_LOKI=true'
+      - 'ENABLE_LOGS_OTELCOL=true'
+      - 'ENABLE_LOGS_ALL=true'
+    restart: unless-stopped
+    volumes:
+      - otel-data:/var/lib/grafana
+
+volumes:
+  otel-data:

@@ -1,4 +1,5 @@
 spring:
+  # 資料庫連線設定
   datasource:
     url: jdbc:postgresql://localhost:5432/mydatabase
     username: myuser
@@ -13,20 +14,43 @@ spring:
 springdoc:
   show-actuator: false # 是否要顯示 actuator 端點
   api-docs:
-    enabled: true # Disabling the /v3/api-docs endpoint & page
+    enabled: true # 啟用 Swagger UI
 
 logging:
   level:
     root: info
     com.example.demo: debug
 
+# Actuator 監控設定
 management:
   server:
     port: 8080
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "*" # 開發環境開放所有端點
+  endpoint:
+    health:
+      show-details: always # 顯示詳細健康狀態
   info:
     git:
-      mode: full
+      mode: full # 顯示完整的 Git 資訊
+  observations:
+    annotations:
+      enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: false
+        url: http://localhost:4318/v1/metrics
+    tracing:
+      export:
+        enabled: false
+      endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        enabled: false
+      endpoint: http://localhost:4318/v1/logs
+  tracing:
+    sampling:
+      probability: 1.0
