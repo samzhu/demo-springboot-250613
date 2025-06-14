@@ -77,7 +77,7 @@ com.example.demo
   將會打包到 docker image 中, 所以不要有機密資訊.
 
 - config/application-local.yml
-  這個是 local (本機開發)的設定檔, 不會打包到 docker image 中, 所以可以有機密資訊.
+  這個是 local (本機開發)的設定檔, 不會打包到 docker image 中, 但也不建議包含機密資訊, 你可以放在 config/application-local-env.yml 中.
 
 ##  開發指南
 
