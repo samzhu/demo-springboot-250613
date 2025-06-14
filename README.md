@@ -73,11 +73,11 @@ com.example.demo
 | Staging | 預發布環境 | application-staging.yml |
 | Production | 正式環境 | application-prod.yml |
 
-- src/main/resources/application.yml  
+- `src/main/resources/application.yml`  
   將會打包到 docker image 中, 所以不要有機密資訊.
 
-- config/application-local.yml  
-  這個是 local (本機開發)的設定檔, 不會打包到 docker image 中, 但也不建議包含機密資訊, 你可以放在 config/application-local-env.yml 中.
+- `config/application-local.yml`  
+  這個是 local (本機開發)的設定檔, 不會打包到 docker image 中, 但也不建議包含機密資訊, 你可以放在 `config/application-local-env.yml` 中.
 
 ##  開發指南
 
