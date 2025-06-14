@@ -14,6 +14,7 @@ import com.example.demo.config.CacheConfig;
 import com.example.demo.infrastructure.repositories.BookRepository;
 import com.example.demo.models.Book;
 
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,6 +35,7 @@ public class BookService {
      * @Cacheable - 將結果存入快取，下次相同請求直接從快取返回
      */
     @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE)
+    @Observed(name = "books.get_all", contextualName = "service.get_all_books")
     public List<Book> getAllBooks() {
         log.info("從資料庫獲取所有書本");
         return bookRepository.findAll();
@@ -44,6 +46,7 @@ public class BookService {
      * @Cacheable - 使用書本 ID 作為快取鍵值
      */
     @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE, key = "#id")
+    @Observed(name = "books.get_by_id", contextualName = "service.get_book_by_id")
     public Book getBookById(Integer id) {
         log.info("從資料庫獲取書本 ID: {}", id);
         return bookRepository.findById(id)
@@ -56,6 +59,7 @@ public class BookService {
      */
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
+    @Observed(name = "books.update", contextualName = "service.update_book")
     public Book createBook(Book book) {
         log.info("新增書本: {}", book.getTitle());
         if (bookRepository.existsByIsbn(book.getIsbn())) {
@@ -73,6 +77,7 @@ public class BookService {
      */
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
+    @Observed(name = "books.delete", contextualName = "service.delete_book")
     public Book updateBook(Integer id, Book book) {
         log.info("更新書本 ID: {}", id);
         Book existingBook = bookRepository.findById(id)

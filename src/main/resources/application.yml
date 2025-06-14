@@ -1,11 +1,44 @@
 spring:
   application:
-    name: demo
+    name: demo # 這會作為 OTel 中的 service.name，非常重要
   threads:
     virtual:
       enabled: true
+
+management:
+  observations:
+    annotations:
+      enabled: true # 啟用基於註解的觀測 (@Observed)
+  opentelemetry:    # OpenTelemetry 資源屬性，將附加到所有遙測訊號
+    resource-attributes:
+      service.version: "1.0.0"
+      deployment.environment: "development"
+  # Tracing 相關配置
+  tracing:
+    sampling:
+      # 在開發和測試環境中，設定為 1.0 以捕獲所有追蹤，確保不會遺漏任何請求 [2]
+      probability: 1.0 
+  otlp:
+    metrics:
+      export:
+        enabled: true
+        url: http://localhost:4318/v1/metrics
+        step: 10s # 預設匯出間隔是 1 分鐘，可以縮短以便測試
+    tracing:
+      export:
+        enabled: true
+      endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        enabled: true
+      endpoint: http://localhost:4318/v1/logs
+      
 server:
   shutdown: graceful
   error:
     include-message: always
     include-binding-errors: always
+
+
+
+

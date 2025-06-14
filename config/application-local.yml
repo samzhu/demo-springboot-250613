@@ -16,41 +16,57 @@ springdoc:
   api-docs:
     enabled: true # 啟用 Swagger UI
 
-logging:
-  level:
-    root: info
-    com.example.demo: debug
+# logging:
+#   level:
+#     root: info
+#     com.example.demo: debug
 
-# Actuator 監控設定
 management:
-  server:
-    port: 8080
   endpoints:
     web:
       exposure:
-        include: "*" # 開發環境開放所有端點
-  endpoint:
-    health:
-      show-details: always # 顯示詳細健康狀態
-  info:
-    git:
-      mode: full # 顯示完整的 Git 資訊
-  observations:
-    annotations:
-      enabled: true
+        include: "*"
   otlp:
     metrics:
       export:
-        enabled: false
-        url: http://localhost:4318/v1/metrics
-    tracing:
-      export:
-        enabled: false
-      endpoint: http://localhost:4318/v1/traces
-    logging:
-      export:
-        enabled: false
-      endpoint: http://localhost:4318/v1/logs
-  tracing:
-    sampling:
-      probability: 1.0
+        enabled: true
+
+
+# # Actuator 監控設定
+# management:
+#   server:
+#     port: 8080
+#   endpoints:
+#     web:
+#       exposure:
+#         include: "*" # 開發環境開放所有端點
+#   endpoint:
+#     health:
+#       show-details: always # 顯示詳細健康狀態
+#   info:
+#     git:
+#       mode: full # 顯示完整的 Git 資訊
+#   observations:
+#     annotations:
+#       enabled: true
+#   otlp:
+#     metrics:
+#       export:
+#         enabled: true
+#         url: http://localhost:4318/v1/metrics
+#     tracing:
+#       export:
+#         enabled: true
+#       endpoint: http://localhost:4318/v1/traces
+#     logging:
+#       export:
+#         enabled: true
+#       endpoint: http://localhost:4318/v1/logs
+#   tracing:
+#     sampling:
+#       probability: 1.0
+
+# server:
+#   error:
+#     include-message: always
+#     include-binding-errors: never

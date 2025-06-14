@@ -11,7 +11,7 @@ services:
     image: 'redis:latest'
     ports:
       - '6379:6379'
-  # 監控
+  # 監控 All-in-One 套件
   otel-lgtm:
     image: 'grafana/otel-lgtm:latest'
     ports:
