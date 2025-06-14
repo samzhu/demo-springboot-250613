@@ -13,9 +13,12 @@ import com.example.demo.models.Book;
 /**
  * 書本資料轉換器
  * 使用 MapStruct 自動生成實作類別
+ * 
+ * @Mapper 註解說明：
+ * - unmappedTargetPolicy = ReportingPolicy.IGNORE：忽略目標物件中未被映射的屬性，避免編譯時產生警告
+ * - nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE：當來源物件屬性為 null 時，不更新目標物件的對應屬性
  */
 @Mapper(
-    componentModel = "spring",
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
