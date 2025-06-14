@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
+  main:
+    banner-mode: console
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+springdoc:
+  show-actuator: false # 是否要顯示 actuator 端點
+  api-docs:
+    enabled: true # Disabling the /v3/api-docs endpoint & page
+
+logging:
+  level:
+    root: info
+    com.example.demo: debug
+
+management:
+  server:
+    port: 8080
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    git:
+      mode: full

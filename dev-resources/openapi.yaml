@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: 書本管理 API
+  description: 一個簡單的書本管理 REST API Demo
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: 開發環境
+
+tags:
+  - name: books
+    description: 書本管理
+
+paths:
+  /books:
+    get:
+      tags:
+        - books
+      summary: 獲取所有書本
+      description: 獲取所有書本列表
+      responses:
+        '200':
+          description: 成功獲取書本列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookDto'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - books
+      summary: 新增書本
+      description: 建立一本新書本
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequest'
+      responses:
+        '201':
+          description: 書本建立成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDto'
+        '400':
+          description: 請求資料無效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /books/{id}:
+    get:
+      tags:
+        - books
+      summary: 根據 ID 獲取書本
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功獲取書本
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDto'
+        '404':
+          description: 書本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - books
+      summary: 更新書本
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequest'
+      responses:
+        '200':
+          description: 書本更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDto'
+        '404':
+          description: 書本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - books
+      summary: 刪除書本
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 書本刪除成功
+        '404':
+          description: 書本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    BookDto:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - isbn
+      properties:
+        id:
+          type: integer
+          description: 書本 ID
+          example: 1
+        title:
+          type: string
+          description: 書名
+          example: "Spring Boot 實戰"
+        author:
+          type: string
+          description: 作者
+          example: "張三"
+        isbn:
+          type: string
+          description: ISBN
+          example: "9789863479431"
+        publishYear:
+          type: integer
+          description: 出版年份
+          example: 2023
+        price:
+          type: number
+          description: 價格
+          example: 599.0
+        createdAt:
+          type: string
+          format: date-time
+          description: 建立時間
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新時間
+
+    BookRequest:
+      type: object
+      required:
+        - title
+        - author
+        - isbn
+      properties:
+        title:
+          type: string
+          description: 書名
+          example: "Spring Boot 實戰"
+        author:
+          type: string
+          description: 作者
+          example: "張三"
+        isbn:
+          type: string
+          description: ISBN
+          example: "9789863479431"
+        publishYear:
+          type: integer
+          description: 出版年份
+          example: 2023
+        price:
+          type: number
+          description: 價格
+          example: 599.0
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 錯誤訊息
+          example: "找不到指定的書本"
+        status:
+          type: integer
+          description: HTTP 狀態碼
+          example: 404 

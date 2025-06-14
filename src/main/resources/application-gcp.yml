@@ -1,0 +1,10 @@
+spring:
+  main:
+    cloud-platform: kubernetes
+    banner-mode: off
+  datasource:
+    username: ${db.username}
+    password: ${db.password}
+  config:
+    import: # 因為要啟用 gcp secret manager
+    - sm://

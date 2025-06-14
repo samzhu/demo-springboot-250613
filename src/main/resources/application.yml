@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: demo
+
+server:
+  shutdown: graceful
+  error:
+    include-message: always
+    include-binding-errors: always

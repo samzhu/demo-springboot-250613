@@ -1,0 +1,83 @@
+databaseChangeLog:
+- changeSet:
+    id: 1749857749130-1
+    author: samzhu (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: book_pkey
+            name: id
+            remarks: 書本 ID，使用 SERIAL 自動產生遞增值
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: title
+            remarks: 書名，必填，最大長度 255 字元
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: author
+            remarks: 作者名稱，必填，最大長度 100 字元
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: isbn
+            remarks: 國際標準書號，必填，固定 13 位數
+            type: VARCHAR(13)
+        - column:
+            name: publish_year
+            remarks: 出版年份，可為空
+            type: INTEGER
+        - column:
+            name: price
+            remarks: 價格，可為空，最多 10 位數，小數點後 2 位
+            type: numeric(10, 2)
+        - column:
+            defaultValueComputed: CURRENT_TIMESTAMP
+            name: created_at
+            remarks: 建立時間，自動填入當前時間
+            type: TIMESTAMP WITH TIME ZONE
+        - column:
+            defaultValueComputed: CURRENT_TIMESTAMP
+            name: updated_at
+            remarks: 更新時間，自動填入當前時間
+            type: TIMESTAMP WITH TIME ZONE
+        remarks: 書本資料表，用於儲存書本的基本資訊
+        tableName: book
+- changeSet:
+    id: 1749857749130-2
+    author: samzhu (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: author
+        indexName: idx_author
+        tableName: book
+- changeSet:
+    id: 1749857749130-3
+    author: samzhu (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: publish_year
+        indexName: idx_publish_year
+        tableName: book
+- changeSet:
+    id: 1749857749130-4
+    author: samzhu (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: isbn
+        constraintName: uk_isbn
+        tableName: book
+

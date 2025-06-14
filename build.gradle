@@ -1,0 +1,130 @@
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.cyclonedx.bom' version '2.3.0'
+	id 'com.gorylenko.gradle-git-properties' version '2.5.0' // https://plugins.gradle.org/plugin/com.gorylenko.gradle-git-properties
+	id 'org.openapi.generator' version '7.13.0'              // https://plugins.gradle.org/plugin/org.openapi.generator
+}
+
+group = 'com.example'
+version = '0.0.1'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('mapstructVersion', "1.6.+")               // https://central.sonatype.com/artifact/org.mapstruct/mapstruct
+	set('springdocVersion', "2.8.+")               // https://central.sonatype.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+	set('jacksonDatabindNullableVersion', "0.2.+") // https://central.sonatype.com/artifact/org.openapitools/jackson-databind-nullable
+
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// 搭配JWT用來保護API端點
+	// implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// 換成 otel
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	implementation 'org.liquibase:liquibase-core'
+	// 若程式完全符合規格書, 可視情況決定要不要提供 swagger-ui.html
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+	implementation "org.openapitools:jackson-databind-nullable:${jacksonDatabindNullableVersion}"
+	// MapStruct 轉換器
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	//
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	runtimeOnly 'io.micrometer:micrometer-registry-otlp'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 設定測試框架為 JUnit Platform 並顯示測試過程的輸出內容
+tasks.named('test') {
+	useJUnitPlatform()
+	testLogging {
+        events "standardOut", "standardError"
+    }
+}
+
+// 配置 git-properties plugin，即使沒有 Git 目錄也不會編譯失敗
+tasks.named('generateGitProperties') {
+    gitProperties {
+        failOnNoGitDirectory = false
+    }
+}
+
+
+// 將 OpenAPI 產生的 Java 程式碼加入到專案的主要原始碼集中，讓這些自動生成的程式碼能被編譯和使用
+sourceSets {
+    main {
+        java {
+			srcDir new File(buildDir, "/generated/openapi/src/main/java")
+        }
+    }
+}
+
+// 確保在編譯之前先執行 openApiGenerate 任務
+tasks.named('compileJava') {
+    dependsOn 'openApiGenerate' 
+}
+
+// 配置 OpenAPI 程式碼生成器，使用 Spring Cloud 風格產生介面和 DTO
+tasks.named('openApiGenerate') {
+    generatorName.set("spring")
+    library.set("spring-cloud")
+    inputSpec.set(layout.projectDirectory.file("dev-resources/openapi.yaml").asFile.path)
+    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().asFile.path)
+    apiPackage.set("com.example.demo.interfaces.api")
+    modelPackage.set("com.example.demo.interfaces.dto")
+    configOptions.set([
+        hateoas: "false",
+        interfaceOnly: "true",
+        useTags: "true",
+        useResponseEntity: "true",
+        unhandledException: "true",
+        useSpringBoot3: "true"
+    ])
+    logToStderr.set(true)
+}
+
+// 配置 JaCoCo 測試覆蓋率報告，生成 XML 格式供 Sonar 分析使用，並確保在測試執行後才生成
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required.set(true)  // 必需，用於 Sonar 分析
+		html.required.set(true) // 可選，用於本地查看
+        csv.required.set(false) // 可選，一般不需要
+    }
+}
+
+
