@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -101,6 +102,7 @@ public class BookService {
      * 刪除書本
      * @CacheEvict - 刪除書本時清除所有快取
      */
+    @Async
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
     public void deleteBook(Integer id) {
