@@ -790,17 +790,17 @@ graph TD
 ```mermaid
 graph TD
     subgraph APP["應用程式內部"]
-        A[業務方法] -->|@Observed| B{"Micrometer API<br/>檢測層/門面層"}
+        A["業務方法"] -->|"@Observed"| B["Micrometer API<br/>檢測層/門面層"]
 
         subgraph METRICS["指標 Metrics 數據流"]
-            B -.->|Timer| C_M["micrometer-core<br/>指標 API 核心"]
+            B -.->|"Timer"| C_M["micrometer-core<br/>指標 API 核心"]
             C_M --> D_M1["micrometer-registry-otlp<br/>指標 OTLP 匯出器"]
             D_M1 --> E
             C_M --> D_M2["micrometer-registry-prometheus<br/>指標 Prometheus 端點"]
         end
 
         subgraph TRACES["追蹤 Traces 數據流"]
-            B -.->|Span| C_T["micrometer-tracing<br/>追蹤 API 門面"]
+            B -.->|"Span"| C_T["micrometer-tracing<br/>追蹤 API 門面"]
             C_T --> D_T["micrometer-tracing-bridge-otel<br/>橋接器"]
             D_T --> F_T["OpenTelemetry SDK<br/>實現層"]
             F_T --> G_T["opentelemetry-exporter-otlp<br/>追蹤 OTLP 匯出器"]
@@ -809,7 +809,7 @@ graph TD
     end
 
     subgraph BACKEND["監控後端"]
-        E[otel-lgtm]
+        E["otel-lgtm"]
     end
 
     style B fill:#fffbe6,stroke:#ffad33
