@@ -606,8 +606,8 @@ spring:
 
 在寫任何監控程式碼之前，我們需要先理解 Spring Boot 3 的觀測哲學。Micrometer 的核心開發者 Jonatan Ivanov 說過：
 
-> “In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…”
-> “在這些應用程式中，我沒有手動建立任何觀測，因為我所需要的基本上都已經被我使用的框架/函式庫自動檢測了…”
+> “In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…”  
+> “在這些應用程式中，我沒有手動建立任何觀測，因為我所需要的基本上都已經被我使用的框架/函式庫自動檢測了…”  
 
 這句話揭示了一個核心思想：**優先依賴自動化檢測 (Rely on Automatic Instrumentation First)**。
 
@@ -773,7 +773,7 @@ public class BookService {
 
 我們已經學會用 `@Observed` 為業務邏輯加上觀測能力。現在，我們來揭開神秘的面紗，看看背後這些技術套件是如何分工合作，最終將監控數據變成 OpenTelemetry 格式並傳送出去的。
 
-### 整理架構
+### 整體架構圖
 
 ```mermaid
 graph TD
