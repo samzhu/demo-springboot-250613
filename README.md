@@ -864,14 +864,6 @@ graph TD
     D_M1 -->|"Metrics via OTLP"| L
     D_M2 -.->|"Prometheus Pull"| P
     P -.->|"聯邦或遠端讀取"| L
-
-    classDef dependency fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef exporter fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef backend fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    
-    class C_T,C_M dependency
-    class D_T,D_M1,D_M2,G_T,I_L exporter
-    class L,P backend
 ```
 
 | 套件 (Dependency)                                                        | 定位               | 功能說明                                                                                                                                                            |
