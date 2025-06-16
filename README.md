@@ -831,26 +831,26 @@ graph TD
     subgraph APP["應用程式內部"]
         A["業務方法<br/>執行 log.info"] -->|"@Observed"| B["Micrometer Observation<br/>統一門面 API"]
 
-        subgraph TRACES["1. 追蹤數據流"]
+        subgraph TRACES["追蹤數據流"]
             B -.->|"創建 Span"| C_T["micrometer-tracing<br/>核心追蹤 API"]
             C_T --> D_T["micrometer-tracing-bridge-otel<br/>橋接到 OTel"]
             D_T --> F_T["OpenTelemetry SDK<br/>遙測數據處理核心"]
         end
 
-        subgraph LOGS["2. 日誌數據流"]
+        subgraph LOGS["日誌數據流"]
             F_T -.->|"TraceId & SpanId 注入 MDC"| H_L["日誌框架<br/>SLF4J + Logback + MDC"]
             A -->|"log.info 寫入日誌"| H_L
             H_L -->|"Logback Appender 攔截"| I_L["opentelemetry-spring-boot-starter<br/>含 Logback 整合"]
             I_L -->|"轉換為 OTLP LogRecord"| F_T
         end
 
-        subgraph METRICS["3. 指標數據流"]
+        subgraph METRICS["指標數據流"]
             B -.->|"自動生成計時器與計數器"| C_M["micrometer-core<br/>指標收集核心"]
             C_M --> D_M1["micrometer-registry-otlp<br/>指標 OTLP 匯出器"]
             C_M --> D_M2["micrometer-registry-prometheus<br/>Prometheus 端點匯出"]
         end
 
-        subgraph EXPORT["4. 數據匯出層"]
+        subgraph EXPORT["數據匯出層"]
             F_T --> G_T["opentelemetry-exporter-otlp<br/>統一 OTLP 匯出器"]
         end
     end
