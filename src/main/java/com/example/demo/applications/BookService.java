@@ -30,13 +30,13 @@ import lombok.extern.slf4j.Slf4j;
 public class BookService {
 
     private final BookRepository bookRepository;
-    
+
     /**
      * 獲取所有書本
-     * @Cacheable - 將結果存入快取，下次相同請求直接從快取返回
+     * 不使用快取，每次都從資料庫查詢
      */
-    @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE)
-    @Observed(name = "books.get_all", contextualName = "service.get_all_books")
+    @Observed(name = "book.catalog.browse", contextualName = "書本目錄瀏覽", lowCardinalityKeyValues = { "operation",
+            "list_all", "source", "database" })
     public List<Book> getAllBooks() {
         log.info("從資料庫獲取所有書本");
         return bookRepository.findAll();
@@ -44,23 +44,25 @@ public class BookService {
 
     /**
      * 根據 ID 獲取書本
+     * 
      * @Cacheable - 使用書本 ID 作為快取鍵值
      */
-    @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE, key = "#id")
-    @Observed(name = "books.get_by_id", contextualName = "service.get_book_by_id")
+    @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
+    @Observed(name = "book.details.view", contextualName = "書本詳情查看", lowCardinalityKeyValues = { "operation",
+            "get_by_id", "cache_enabled", "true" })
     public Book getBookById(Integer id) {
         log.info("從資料庫獲取書本 ID: {}", id);
         return bookRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到指定的書本"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到指定的書本"));
     }
 
     /**
      * 新增書本
-     * @CacheEvict - 新增書本時清除所有快取
+     * 不需要清除快取，因為不快取 all_books
      */
     @Transactional
-    @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
-    @Observed(name = "books.update", contextualName = "service.update_book")
+    @Observed(name = "book.inventory.add", contextualName = "書本庫存新增", lowCardinalityKeyValues = { "operation", "create",
+            "business_impact", "high" })
     public Book createBook(Book book) {
         log.info("新增書本: {}", book.getTitle());
         if (bookRepository.existsByIsbn(book.getIsbn())) {
@@ -74,18 +76,20 @@ public class BookService {
 
     /**
      * 更新書本
-     * @CacheEvict - 更新書本時清除所有快取
+     * 
+     * @CacheEvict - 只清除被更新的特定書本快取
      */
     @Transactional
-    @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
-    @Observed(name = "books.delete", contextualName = "service.delete_book")
+    @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
+    @Observed(name = "book.inventory.update", contextualName = "書本資訊更新", lowCardinalityKeyValues = { "operation",
+            "update", "cache_evict", "single", "business_impact", "medium" })
     public Book updateBook(Integer id, Book book) {
         log.info("更新書本 ID: {}", id);
         Book existingBook = bookRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到指定的書本"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到指定的書本"));
 
-        if (!existingBook.getIsbn().equals(book.getIsbn()) && 
-            bookRepository.existsByIsbn(book.getIsbn())) {
+        if (!existingBook.getIsbn().equals(book.getIsbn()) &&
+                bookRepository.existsByIsbn(book.getIsbn())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ISBN 已存在");
         }
 
@@ -100,11 +104,14 @@ public class BookService {
 
     /**
      * 刪除書本
-     * @CacheEvict - 刪除書本時清除所有快取
+     * 
+     * @CacheEvict - 只清除被刪除的特定書本快取
      */
     @Async
     @Transactional
-    @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, allEntries = true)
+    @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
+    @Observed(name = "book.inventory.remove", contextualName = "書本庫存移除", lowCardinalityKeyValues = { "operation",
+            "delete", "async", "true", "business_impact", "high" })
     public void deleteBook(Integer id) {
         log.info("刪除書本 ID: {}", id);
         if (!bookRepository.existsById(id)) {

@@ -61,7 +61,6 @@ dependencies {
 	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 	// OTLP 日誌 Appender：用於直接匯出日誌
 	implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
-	
 	// 將 Metrics 透過 OTLP 協定匯出的 Micrometer 註冊表
 	runtimeOnly 'io.micrometer:micrometer-registry-otlp'
 	// Prometheus 指標註冊表：提供 /actuator/prometheus 端點
