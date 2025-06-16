@@ -824,7 +824,7 @@ graph TD
 
 ### 關鍵套件的職責與數據流
 
-下圖清晰地展示了當一個帶有 `@Observed` 的方法被呼叫時，指標 (Metrics) 和 追蹤 (Traces) 數據會兵分兩路，各自經歷不同的處理流程。
+下圖清晰地展示了當一個帶有 `@Observed` 的方法被呼叫時，指標 (Metrics) 追蹤 (Traces) 和 Log (紀錄) 數據會各自經歷不同的處理流程。
 
 ```mermaid
 graph TD
