@@ -907,6 +907,111 @@ sequenceDiagram
 
 ---
 
+## 🔬 現代化可觀測性 (Observability) - 第三部分：在 Grafana 中探索遙測數據
+
+現在，最激動人心的部分來了：實際看到我們辛苦設定後收集到的遙測數據。打開瀏覽器，訪問 `http://localhost:3000` 即可進入 Grafana 的儀表板。
+
+### Grafana 導覽與數據源
+
+在 Grafana 的左側導航欄中，點擊「Explore」（指南針圖標）。在頁面頂部的下拉菜單中，您會看到 `otel-lgtm` 這個 Docker 映像檔已經為我們預先配置好了三個核心數據源，對應可觀測性的三大支柱：
+
+- **`mimir`**: 用於查詢**指標 (Metrics)**。
+- **`loki`**: 用於查詢**日誌 (Logs)**。
+- **`tempo`**: 用於查詢**追蹤 (Traces)**。
+
+### 追蹤 (Traces) 的藝術：使用 Tempo 和 TraceQL
+
+選擇 `tempo` 數據源。我們可以使用 TraceQL 語言來查詢追蹤。
+
+1. **按服務名稱查詢**:
+    在 `application.yml` 中，我們定義了 `spring.application.name: demo`。這個名稱會被 OpenTelemetry 當作 `service.name`。因此，最常用的查詢就是篩選出所有來自我們應用程式的追蹤。
+
+    ```text
+    { .service.name="demo" }
+    ```
+
+2. **按自訂的 Span 名稱查詢**:
+    我們在 `BookService` 中用 `@Observed(contextualName = "書本詳情查看")` 為方法加上了有意義的名稱。這個名稱會變成 Span 的名字。這可以讓我們精確地找到特定業務邏輯的追蹤。
+
+    ```text
+    { span.name="書本詳情查看" }
+    ```
+
+3. **分析追蹤視圖 (Waterfall View)**:
+    點擊任意一個查詢結果，您會看到一個瀑布圖。
+    - **快取未命中 (Cache Miss)**：當您第一次查詢某本書的詳情時，會看到一個層級分明的結構：頂層是 `GET /books/{id}`，其下是 `書本詳情查看`，再下面還會有 `SELECT` 資料庫查詢的 Span。每個 Span 的耗時都清晰可見。
+    - **快取命中 (Cache Hit)**：當您再次查詢同一本書時，會發現 `SELECT` 這個 Span 消失了，並且整個追蹤的總耗時顯著縮短。這就是快取發揮作用的直接證明。
+
+### 指標 (Metrics) 的力量：使用 Mimir 和 PromQL
+
+選擇 `mimir` 數據源。我們使用 PromQL (Prometheus Query Language) 來查詢指標。
+
+#### OTLP 到 Prometheus 的名稱轉換
+
+理解一個關鍵的轉換規則至關重要：Micrometer 產生的指標名稱，在透過 OTLP 匯出到 Mimir/Prometheus 時，格式會被轉換：
+
+- 指標名稱中的點 `.` 會被轉換為下劃線 `_`。
+- `service.name` (`demo`) 這個資源屬性會被映射為 `job` 標籤。
+- 計時器 (`@Observed` 或 HTTP 請求) 會自動產生 `_count`, `_sum`, `_bucket` 等後綴的指標。
+
+| 原始名稱 (`@Observed` name) | 轉換後的 PromQL 指標 (範例) |
+| :--- | :--- |
+| `book.details.view` | `book_details_view_seconds_count`, `book_details_view_seconds_sum` |
+| HTTP Server Requests | `http_server_requests_seconds_count` |
+
+#### 實用 PromQL 查詢
+
+1. **查詢 API 每秒請求數 (RPS)**:
+
+    ```promql
+    rate(http_server_requests_seconds_count{job="demo"}[5m])
+    ```
+
+    這個查詢計算了在過去 5 分鐘窗口內，`demo` 服務每秒的平均請求數。
+
+2. **查詢「查看書本詳情」操作的 P95 延遲**:
+
+    ```promql
+    histogram_quantile(0.95, sum(rate(book_details_view_seconds_bucket{job="demo"}[5m])) by (le))
+    ```
+
+    這是一個更高級的查詢，它利用直方圖 (`_bucket`) 數據，計算出 95% 的「查看書本詳情」操作的延遲時間。
+
+3. **利用自訂標籤分析**:
+    我們在 `@Observed` 中定義了 `lowCardinalityKeyValues`。例如 `operation="get_by_id"`。這個標籤可以用來做更精細的分析。
+
+    ```promql
+    // 計算所有 "get_by_id" 操作的次數
+    sum(increase(book_details_view_seconds_count{job="demo", operation="get_by_id"}[5m]))
+    ```
+
+#### Exemplars 的魔法
+
+在 Grafana 的圖表面板中，如果您看到數據點旁邊有一個彩色的鑽石圖標，這就是一個 **Exemplar**。它是一個與該時間點的指標數據相關聯的**具體追蹤樣本**。當您看到延遲圖表上出現一個尖峰時，可以直接點擊那個尖峰上的鑽石圖標，Grafana 會立刻帶您跳轉到**導致這個延遲尖峰的那個請求的完整追蹤視圖**。這個功能極大地縮短了從「發現問題」到「定位問題」的路徑。
+
+### 日誌 (Logs) 的關聯：使用 Loki 和 LogQL
+
+最後，選擇 `loki` 數據源。我們使用 LogQL 來查詢日誌。得益於 OpenTelemetry 的自動整合，現在每一行日誌都自動包含了 `trace_id` 和 `span_id`。
+
+1. **查詢應用的所有日誌**:
+    Loki 中的 `job` 標籤可能由 `service.namespace/service.name` 組合而成。你可以使用「Log browser」按鈕來查看所有可用的標籤。
+
+    ```logql
+    {job="demo/demo"}
+    ```
+
+2. **從追蹤跳轉到日誌 (Trace to Logs)**:
+    這是最常用的功能。在 Tempo 的追蹤瀑布圖中，點擊任一個 Span，您通常會看到一個「Logs for this span」的按鈕。點擊它，Grafana 會自動生成一個 LogQL 查詢，篩選出與該 Span 的 `trace_id` 和 `span_id` 相關的所有日誌。
+
+3. **手動通過 Trace ID 查詢日誌**:
+    您也可以從 Tempo 複製一個 `trace_id`，然後在 Loki 的查詢框中手動查詢，這將顯示出一個完整請求鏈路上的所有相關日誌。
+
+    ```logql
+    {job="demo/demo"} | json | line_format "{{.message}}" | trace_id = "複製過來的_trace_id"
+    ```
+
+---
+
 ## 環境與組態設定
 
 ### 容器化環境 (`compose.yaml`)
