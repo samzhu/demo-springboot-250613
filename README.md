@@ -224,7 +224,10 @@ tasks.named('openApiGenerate') {
     apiPackage.set("com.example.demo.interfaces.api")   // 產生的 API 介面要放在哪個 package
     modelPackage.set("com.example.demo.interfaces.dto") // 產生的 DTO 模型要放在哪個 package
     configOptions.set([
-            interfaceOnly: "true" // ✨ 只產生介面，不產生 Controller 實作
+        interfaceOnly: "true",        // ✨ 只產生介面，不產生實作
+        useSpringBoot3: "true",       // ✨ 確保與 Spring Boot 3 相容
+        useTags: "true",              // ✨ 根據 YAML 中的 "tags" 產生不同 API 介面
+        unhandledException: "true"    // 強制開發者處理例外
     ])
 }
 ```
