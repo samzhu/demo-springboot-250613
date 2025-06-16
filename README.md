@@ -150,6 +150,109 @@
 - `io.micrometer:micrometer-registry-prometheus`
   Prometheus 指標端點。它提供了另一個指標註冊表，可以在 /actuator/prometheus 端點上暴露一個 Prometheus 格式的指標頁面。這在本地開發時非常有用，可以直接查看指標數據，而無需等待數據發送到後端。
 
+## 📜 資料庫版本控制 (Liquibase)
+
+在團隊開發中，管理資料庫結構 (Schema) 的變更是一大挑戰。如果每個人都在本地隨意修改資料庫，或依賴 JPA 的 `ddl-auto: update`，很快就會導致開發、測試和正式環境的資料庫結構不一致，引發難以追蹤的錯誤。  
+
+本專案採用 Liquibase 將資料庫的變更像程式碼一樣進行版本控制，確保所有環境的資料庫結構都是一致且可追溯的。  
+
+為什麼不用 `ddl-auto`?  
+雖然 `spring.jpa.hibernate.ddl-auto = update` 在開發初期很方便，但它是一個危險的選擇：  
+
+- **缺乏控制**: 你無法精確控制它產生的 SQL。
+- **資料遺失風險**: 在某些情況下可能導致資料遺失。
+- **無版本紀錄**: 你不知道資料庫在何時、被誰、做了哪些變更。
+- **不適用於正式環境**: 在正式環境使用 update 是絕對不被推薦的。
+
+Liquibase 透過一個更嚴謹的流程解決了這些問題。  
+
+Liquibase 如何運作？  
+
+1. 自動執行: 當 Spring Boot 應用程式啟動時，它會自動偵測到 Liquibase 的存在，並執行資料庫的遷移。
+2. 變更日誌 (Changelog): 開發者將所有資料庫變更（如建表、加欄位）定義在「變更日誌」檔案中。在本專案中，我們使用 YAML 格式。
+3. 追蹤表: Liquibase 會在你的資料庫中建立兩張追蹤表：`DATABASECHANGELOG` 和 `DATABASECHANGELOGLOCK`。  
+
+- `DATABASECHANGELOGLOCK`: 用來確保在同一時間只有一個應用程式實例在執行資料庫遷移，防止衝突。
+- `DATABASECHANGELOG`: 記錄每一個已經被成功執行的變更集 (changeSet)。應用程式每次啟動時，Liquibase 會比對日誌檔案和這張表，只執行那些尚未被記錄的、新的變更集。
+
+專案實踐  
+
+1. 主變更日誌 (Master Changelog)
+這是 Liquibase 的進入點，位於 `src/main/resources/db/changelog/db.changelog-master.yaml`。它本身不包含具體的變更，而是像一個目錄，負責引入其他的變更日誌檔案。
+
+```yaml
+# db.changelog-master.yaml
+databaseChangeLog:
+  - include:
+      file: history/20250614.yaml
+      relativeToChangelogFile: true # 路徑相對於當前檔案
+      description: 初始化表格
+  # ✨ 當有新的變更時，在這裡加入新的 include
+  # - include:
+  #     file: history/20250615.yaml
+  #     relativeToChangelogFile: true
+  #     description: 新增使用者表格
+```
+
+2. 變更集檔案 (Changeset File)
+
+所有實際的資料庫結構變更都定義在這些檔案裡。我們將它們存放在 `history/` 目錄下，並以日期命名，方便追溯。  
+
+一個檔案可以包含多個 `changeSet`。每個 `changeSet` 都是一個不可變的、原子的資料庫操作單元，由 `id` 和 `author` 唯一識別。
+
+讓我們看看 `history/20250614.yaml` 的內容：
+
+```yaml
+# history/20250614.yaml
+databaseChangeLog:
+- changeSet:
+    id: 1749857749130-1 # 唯一 ID，可以是數字、字串或自動生成
+    author: samzhu (generated)
+    changes:
+    - createTable:
+        tableName: book
+        remarks: 書本資料表，用於儲存書本的基本資訊
+        columns:
+        - column:
+            name: id
+            type: INTEGER
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              nullable: false
+        - column:
+            name: title
+            type: VARCHAR(255)
+            constraints:
+              nullable: false
+        # ... 其他欄位 ...
+```
+
+開發流程：如何新增一筆資料庫變更？  
+
+假設你需要為 `book` 表增加一個 `stock_quantity`（庫存數量）欄位。  
+
+1. **建立新檔案**: 在 `src/main/resources/db/changelog/history/` 目錄下建立一個新的 YAML 檔案，例如 `20250616-add-stock-to-book.yaml`。  
+
+2. **定義 ChangeSet**: 在新檔案中，加入你的變更集。`id` 必須是唯一的。  
+
+3. **更新主檔案**: 在 `db.changelog-master.yaml` 中引入你剛剛建立的檔案。
+
+```yaml
+databaseChangeLog:
+  - include:
+      file: history/20250614.yaml
+      relativeToChangelogFile: true
+      description: 初始化表格
+  - include: # ✨ 新增這一段
+      file: history/20250616-add-stock-to-book.yaml
+      relativeToChangelogFile: true
+      description: 為書本新增庫存欄位
+```
+
+4. **啟動應用**: 重新啟動 Spring Boot 應用。Liquibase 會檢查 DATABASECHANGELOG 表，發現這個新的 changeSet 還沒有被執行過，於是它會執行對應的 ALTER TABLE SQL 命令，為你的資料庫加上新欄位。  
+
+這個流程確保了每一次資料庫的變更都有紀錄、可追蹤，並且能在團隊所有成員和所有環境中自動且一致地被應用。  
 
 ## 🤝 API First 開發流程
 
@@ -198,8 +301,69 @@ tasks.named('openApiGenerate') {
 
 **平行開發**：後端在實作業務邏輯的同時，前端或其他服務的開發者可以立即使用 `openapi.yaml` 來產生客戶端程式碼 (Client Stub) 或建立 Mock Server，無需等待後端開發完成。
 
+## 🗺️ 物件映射 (MapStruct)
 
-### 現代化可觀測性
+`org.mapstruct:mapstruct`  
+`org.mapstruct:mapstruct-processor` (annotationProcessor)  
+
+用途: 在分層架構中，我們通常不希望將資料庫實體 (Entity) 直接暴露給外部 API。因此，我們需要定義資料傳輸物件 (DTO)。MapStruct 是一個高效能的 Java Bean 映射工具，它透過在編譯時期自動產生轉換程式碼的方式，來解決 DTO 與 Entity 之間的轉換問題。
+
+優點:
+
+- `高效能`: 編譯期產生原生 Java 程式碼，沒有執行期的反射或代理，效能極佳。
+- `型別安全`: 所有映射都在編譯期檢查，若有欄位不匹配或型別錯誤，編譯會直接失敗。
+- `減少樣板程式碼`: 開發者只需定義一個簡單的介面，MapStruct 就會自動完成所有 get/set 的繁瑣工作。
+
+`build.gradle` 中的關鍵設定  
+```groovy
+tasks.withType(JavaCompile) {
+    options.compilerArgs = [
+        '-Amapstruct.defaultComponentModel=spring',
+        '-Amapstruct.suppressGeneratorTimestamp=true',
+        '-Amapstruct.verbose=true'
+    ]
+}
+```
+
+Mapper 介面定義 (BookMapper.java):  
+我們定義了 BookMapper 介面，並使用 @Mapper 註解標記。MapStruct 會掃描這個介面，並自動產生其具體實作類別 BookMapperImpl。
+
+```java
+@Mapper(
+    componentModel = "spring", // 已在 build.gradle 中設為預設
+    unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
+public interface BookMapper {
+    // 將 BookRequest (DTO) 轉換為 Book (Entity)
+    Book toEntity(BookRequest dto);
+
+    // 將 Book (Entity) 轉換為 BookDto (DTO)
+    BookDto toDto(Book entity);
+}
+```
+
+使用範例:
+
+```java
+@RestController
+@RequiredArgsConstructor // 自動注入 final 的欄位
+public class BookController implements BooksApi {
+
+    private final BookService bookService;
+    private final BookMapper bookMapper; // ✨ MapStruct Mapper 被注入
+
+    @Override
+    public ResponseEntity<BookDto> booksPost(@Valid BookRequest bookRequest) {
+        // 呼叫 mapper 將傳入的 Request DTO 轉為 Entity
+        Book bookEntity = bookMapper.toEntity(bookRequest);
+        Book createdBook = bookService.createBook(bookEntity);
+        // 呼叫 mapper 將回傳的 Entity 轉為 Response DTO
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookMapper.toDto(createdBook));
+    }
+}
+```
+
+## 現代化可觀測性
 
 在現代軟體開發中，尤其是隨著微服務和分散式系統的普及，傳統的監控（Monitoring）方法已顯得捉襟見肘。傳統監控通常回答「系統是否正常運行？」這類問題，但當系統出現問題時，它很難告訴我們「為什麼會出問題？」以及「問題發生在哪裡？」。這就是現代化可觀測性（Observability）登場的時機。
 
