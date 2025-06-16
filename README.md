@@ -222,13 +222,52 @@ tasks.named('openApiGenerate') {
     apiPackage.set("com.example.demo.interfaces.api")   // 產生的 API 介面要放在哪個 package
     modelPackage.set("com.example.demo.interfaces.dto") // 產生的 DTO 模型要放在哪個 package
     configOptions.set([
+        hateoas: "false",
         interfaceOnly: "true",        // ✨ 只產生介面，不產生實作
+        useResponseEntity: "true",    // ✨ 使用 Spring 的 ResponseEntity<T> 作為回傳型別
         useSpringBoot3: "true",       // ✨ 確保與 Spring Boot 3 相容
         useTags: "true",              // ✨ 根據 YAML 中的 "tags" 產生不同 API 介面
-        unhandledException: "true"    // 強制開發者處理例外
+        unhandledException: "true"    // ✨ 強制開發者處理例外
     ])
 }
 ```
+
+ConfigOptions 重要參數解析
+
+- interfaceOnly: "true"
+
+  - 用途: 只產生 API 介面，不產生 Controller 實作類別
+  - 優點: 開發者可以自由實作業務邏輯，保持程式碼的彈性
+  - 結果: 產生如 UserApi.java 介面，而非 UserApiController.java 實作類別
+
+- useSpringBoot3: "true"
+
+  - 重要性: 確保生成的程式碼與 Spring Boot 3.x 相容
+  - 影響: 使用正確的 Jakarta EE 註解（而非舊的 javax）
+  - 範例: 生成 @jakarta.validation.Valid 而非 @javax.validation.Valid
+
+- useTags: "true"
+
+  - 功能: 根據 OpenAPI 規格中的 tags 分組產生不同的 API 介面
+  - 範例: 如果 YAML 中有 tags: [users, orders]，會產生 UsersApi.java 和 OrdersApi.java
+  - 好處: 避免單一巨大的 API 介面，提升程式碼可維護性
+
+- useResponseEntity: "true"
+
+  - 用途: 使用 Spring 的 ResponseEntity<T> 作為回傳型別
+  - 優點: 可以精確控制 HTTP 狀態碼、標頭等回應細節
+  - 範例: ResponseEntity<User> getUser(Long id) 而非 User getUser(Long id)
+
+- unhandledException: "true"
+
+  - 目的: 強制開發者明確處理可能的例外情況
+  - 效果: 在方法簽名中加入 throws Exception
+  - 建議: 搭配 @ControllerAdvice 統一處理例外
+
+- hateoas: "false"
+
+  - 說明: 不啟用 HATEOAS（Hypermedia as the Engine of Application State）
+  - 適用: 一般 RESTful API 通常不需要 HATEOAS 功能
 
 其中 `interfaceOnly: "true"` 的設定，告訴產生器只需定義 API 介面與 DTO，而 Controller 的具體邏輯由開發者自行編寫。這種方式有助於分離「API 的定義」和「業務邏輯的實現」。  
 
@@ -790,30 +829,49 @@ graph TD
 ```mermaid
 graph TD
     subgraph APP["應用程式內部"]
-        A["業務方法"] -->|"@Observed"| B["Micrometer API<br/>檢測層/門面層"]
+        A["業務方法<br/>執行 log.info"] -->|"@Observed"| B["Micrometer Observation<br/>統一門面 API"]
 
-        subgraph METRICS["指標 Metrics 數據流"]
-            B -.->|"Timer"| C_M["micrometer-core<br/>指標 API 核心"]
+        subgraph TRACES["1. 追蹤數據流"]
+            B -.->|"創建 Span"| C_T["micrometer-tracing<br/>核心追蹤 API"]
+            C_T --> D_T["micrometer-tracing-bridge-otel<br/>橋接到 OTel"]
+            D_T --> F_T["OpenTelemetry SDK<br/>遙測數據處理核心"]
+        end
+
+        subgraph LOGS["2. 日誌數據流"]
+            F_T -.->|"TraceId & SpanId 注入 MDC"| H_L["日誌框架<br/>SLF4J + Logback + MDC"]
+            A -->|"log.info 寫入日誌"| H_L
+            H_L -->|"Logback Appender 攔截"| I_L["opentelemetry-spring-boot-starter<br/>含 Logback 整合"]
+            I_L -->|"轉換為 OTLP LogRecord"| F_T
+        end
+
+        subgraph METRICS["3. 指標數據流"]
+            B -.->|"自動生成計時器與計數器"| C_M["micrometer-core<br/>指標收集核心"]
             C_M --> D_M1["micrometer-registry-otlp<br/>指標 OTLP 匯出器"]
-            D_M1 --> E
-            C_M --> D_M2["micrometer-registry-prometheus<br/>指標 Prometheus 端點"]
+            C_M --> D_M2["micrometer-registry-prometheus<br/>Prometheus 端點匯出"]
         end
 
-        subgraph TRACES["追蹤 Traces 數據流"]
-            B -.->|"Span"| C_T["micrometer-tracing<br/>追蹤 API 門面"]
-            C_T --> D_T["micrometer-tracing-bridge-otel<br/>橋接器"]
-            D_T --> F_T["OpenTelemetry SDK<br/>實現層"]
-            F_T --> G_T["opentelemetry-exporter-otlp<br/>追蹤 OTLP 匯出器"]
-            G_T --> E
+        subgraph EXPORT["4. 數據匯出層"]
+            F_T --> G_T["opentelemetry-exporter-otlp<br/>統一 OTLP 匯出器"]
         end
     end
 
-    subgraph BACKEND["監控後端"]
-        E["otel-lgtm"]
+    subgraph BACKEND["外部監控後端"]
+        L["Grafana LGTM Stack<br/>Loki + Grafana + Tempo + Mimir"]
+        P["Prometheus<br/>可選拉取模式"]
     end
+    
+    G_T -->|"Traces & Logs via OTLP"| L
+    D_M1 -->|"Metrics via OTLP"| L
+    D_M2 -.->|"Prometheus Pull"| P
+    P -.->|"聯邦或遠端讀取"| L
 
-    style B fill:#fffbe6,stroke:#ffad33
-    style D_T fill:#e6f3ff,stroke:#3399ff
+    classDef dependency fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef exporter fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef backend fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    
+    class C_T,C_M dependency
+    class D_T,D_M1,D_M2,G_T,I_L exporter
+    class L,P backend
 ```
 
 | 套件 (Dependency)                                                        | 定位               | 功能說明                                                                                                                                                            |
