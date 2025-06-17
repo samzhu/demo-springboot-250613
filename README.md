@@ -558,6 +558,28 @@ public class BookService {
 
 `createBook` (新增書本) 的方法現在不需要任何 `@CacheEvict` 註解。因為新增一本書，並不會讓任何已經存在的快取資料變成「舊的」或「錯的」。
 
+#### 4. 關鍵設定：讓 `#id` 表達式生效
+
+當我們在 `@Cacheable` 或 `@CacheEvict` 中使用像 `key = "#id"` 這樣的 SpEL 表達式時，我們其實是在告訴 Spring：「請使用這個方法的 `id` 參數作為快取的鍵」。
+
+但 Spring 要怎麼知道那個參數就叫做 `id` 呢？在預設情況下，Java 編譯器為了節省空間，並不會把方法的參數名稱（例如 `id`, `book`）保留在編譯後的 `.class` 檔案中。這會導致 Spring Cache 在解析 `#id` 時找不到對應的參數，進而引發錯誤。
+
+為了解決這個問題，我們必須明確地告訴編譯器，請它保留這些參數名稱。這只需要在 `build.gradle` 中加上一個設定：
+
+```groovy
+// build.gradle
+tasks.withType(JavaCompile) {
+    options.compilerArgs = [
+        '-Amapstruct.defaultComponentModel=spring',
+        '-Amapstruct.suppressGeneratorTimestamp=true',
+        '-Amapstruct.verbose=true',
+        '-parameters' // ✨ 關鍵就在這裡！
+    ]
+}
+```
+
+加上了 `-parameters` 這個編譯器旗標後，Spring Cache 就能取得足夠的資訊，正確地將 `#id` 解析為 `getBookById(Integer id)` 方法中的 `id` 參數值，讓我們的動態快取鍵能夠順利運作。這個設定是專案中所有依賴參數名稱的工具（包括 MapStruct）共享的。
+
 #### 策略的優勢
 
 這種「只快取單一項目」的策略更簡單，也更有效率：

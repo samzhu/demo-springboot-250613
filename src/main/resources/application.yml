@@ -17,7 +17,16 @@ management:
   tracing:
     sampling:
       # 在開發和測試環境中，設定為 1.0 以捕獲所有追蹤，確保不會遺漏任何請求 [2]
-      probability: 1.0 
+      probability: 1.0
+    baggage:
+      enabled: true  # 啟用 Baggage 功能
+      remote-fields: # 聲明需要跨服務傳播的業務欄位
+        - book-id
+      tag-fields:    # 為 Baggage 自動添加為本地 Span 的標籤 (tag)
+        - book-id
+      correlation:   # 將 Baggage 欄位加入到日誌的 MDC 中，方便日誌關聯
+        fields:
+          - book-id
   otlp:
     metrics:
       export:

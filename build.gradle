@@ -93,7 +93,8 @@ tasks.withType(JavaCompile) {
     options.compilerArgs = [
         '-Amapstruct.defaultComponentModel=spring',
         '-Amapstruct.suppressGeneratorTimestamp=true',
-        '-Amapstruct.verbose=true'
+        '-Amapstruct.verbose=true',
+        '-parameters'
     ]
 }
 

@@ -14,6 +14,8 @@ import com.example.demo.interfaces.dto.BookRequest;
 import com.example.demo.interfaces.mapper.BookMapper;
 import com.example.demo.models.Book;
 
+import io.micrometer.tracing.Baggage;
+import io.micrometer.tracing.Tracer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ public class BookController implements BooksApi {
 
     private final BookService bookService;
     private final BookMapper bookMapper;
+    private final Tracer tracer;
 
     @Override
     public ResponseEntity<List<BookDto>> booksGet() throws Exception {
@@ -51,6 +54,7 @@ public class BookController implements BooksApi {
     @Override
     public ResponseEntity<BookDto> booksIdGet(Integer id) throws Exception {
         log.info("獲取書本，ID: {}", id);
+        this.setBookIdInBaggage(id);
         Book book = bookService.getBookById(id);
         return ResponseEntity.ok(bookMapper.toDto(book));
     }
@@ -58,6 +62,7 @@ public class BookController implements BooksApi {
     @Override
     public ResponseEntity<BookDto> booksIdPut(Integer id, @Valid BookRequest bookRequest) throws Exception {
         log.info("更新書本，ID: {}, 請求資料: {}", id, bookRequest);
+        this.setBookIdInBaggage(id);
         Book bookEntity = bookMapper.toEntity(bookRequest);
         Book updatedBook = bookService.updateBook(id, bookEntity);
         return ResponseEntity.ok(bookMapper.toDto(updatedBook));
@@ -69,5 +74,21 @@ public class BookController implements BooksApi {
         Book bookEntity = bookMapper.toEntity(bookRequest);
         Book createdBook = bookService.createBook(bookEntity);
         return ResponseEntity.status(HttpStatus.CREATED).body(bookMapper.toDto(createdBook));
+    }
+
+
+    private void setBookIdInBaggage(Integer bookId) {
+        if (bookId == null) {
+            return;
+        }
+        // 根據 application.yml 中設定的名稱 "book-id" 獲取 BaggageField
+        Baggage baggage = tracer.getBaggage("book-id");
+        if (baggage!= null) {
+            // 設定 Baggage 的值
+            baggage.makeCurrent(bookId.toString());
+            log.info("Baggage 'book-id' 已設定為: {}", baggage.get());
+        } else {
+            log.warn("Baggage 欄位 'book-id' 未設定或未啟用。");
+        }
     }
 }
