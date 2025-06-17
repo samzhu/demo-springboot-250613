@@ -854,6 +854,101 @@ public class BookService {
   - **千萬不要**把高基數的值（像是 `book_id`, `user_id`）放在這裡，這會導致監控系統的索引庫爆炸，產生效能問題。
   - **如何使用**：用 `{ "key1", "value1", "key2", "value2" }` 的格式提供。
 
+### 進階追蹤：使用 Baggage 注入高基數業務內文 (選用)
+
+我們剛剛提到，`lowCardinalityKeyValues` **不應該**被用來存放像 `book_id` 或 `user_id` 這類高基數的資料。那麼問題來了：如果我今天就是要追蹤一個特定 `book_id` 的完整請求鏈路，該怎麼做呢？
+
+答案是使用 **Baggage**。
+
+Baggage 是 OpenTelemetry 中一個強大的概念，您可以把它想像成一個跟隨請求在系統中旅行的「隨身行李箱」。您可以在請求的入口點（例如 Controller）將一個業務 ID (如 `book-id: 123`) 放入這個行李箱，之後這個 ID 就會自動地在整個呼叫鏈中傳遞，甚至可以跨越多個微服務。
+
+這是一個選用但極為有用的技巧，能讓除錯和問題排查的效率提升一個量級。
+
+#### 步驟 1：在 `application.yml` 中設定 Baggage 欄位
+
+首先，我們需要明確告訴 Micrometer Tracing，我們想要追蹤哪些 Baggage 欄位。
+
+```yaml
+# src/main/resources/application.yml
+management:
+  tracing:
+    baggage:
+      enabled: true # 確保 Baggage 功能已啟用
+      remote-fields:
+        - book-id # 1. 遠端傳播：讓 'book-id' 可以透過 HTTP headers 在微服務間傳遞。
+      tag-fields:
+        - book-id # 2. 自動標籤：讓 Micrometer 自動將這個 Baggage 的值，作為一個 Tag 加到所有後續的 Span 上。這是能在 Grafana 看到它的關鍵。
+      correlation:
+        enabled: true # 3. 日誌關聯 (強烈建議)
+        fields:
+          - book-id # 4. 將 'book-id' 的值也放進日誌的 MDC 中，方便在日誌裡直接看到和搜尋。
+```
+
+#### 步驟 2：在 Controller 中設定 Baggage 的值
+
+設定好之後，我們需要在程式的入口點，也就是 `BookController` 中，注入 `Tracer` 並將傳入的 `id` 放入 Baggage。
+
+```java
+// src/main/java/com/example/demo/interfaces/rest/BookController.java
+
+// ... 其他 import ...
+import io.micrometer.tracing.Baggage;
+import io.micrometer.tracing.Tracer;
+
+@RestController
+@RequiredArgsConstructor
+public class BookController implements BooksApi {
+
+    private final BookService bookService;
+    private final BookMapper bookMapper;
+    private final Tracer tracer; // Spring Boot 會自動配置好 Tracer
+
+    // ... 其他 API 方法 ...
+
+    @Override
+    public ResponseEntity<BookDto> booksIdGet(Integer id) throws Exception {
+        log.info("獲取書本，ID: {}", id);
+        // 在處理請求的開頭，將 ID 放入 Baggage
+        this.setBookIdInBaggage(id);
+        Book book = bookService.getBookById(id);
+        return ResponseEntity.ok(bookMapper.toDto(book));
+    }
+
+    // ... 其他需要 ID 的方法也做同樣的處理 ...
+
+    /**
+     * 將書本 ID 設定到分散式追蹤的 Baggage 中。
+     * @param bookId 要設定的書本 ID
+     */
+    private void setBookIdInBaggage(Integer bookId) {
+        if (bookId == null) {
+            return;
+        }
+        try {
+            // 根據 application.yml 中設定的名稱 "book-id" 獲取 BaggageField 的句柄
+            Baggage baggage = tracer.getBaggage("book-id");
+            if (baggage!= null) {
+                // 設定 Baggage 的值，這個值將在當前的追蹤上下文中生效
+                baggage.makeCurrent(bookId.toString());
+                log.info("Baggage 'book-id' 已設定為: {}", baggage.get());
+            } else {
+                log.warn("Baggage 欄位 'book-id' 未設定或未啟用。");
+            }
+        } catch (Exception e) {
+            log.error("設定 book-id 到 Baggage 時發生錯誤", e);
+        }
+    }
+}
+```
+
+#### 步驟 3：在 Grafana Tempo 中驗證結果
+
+完成設定並發送一個請求後（例如 `GET /books/2`），我們就可以在 Grafana Tempo 中看到驚人的效果。在追蹤的瀑布圖中，點開任何一個 Span，您會在下方的 `Span Attributes` 區塊中，清楚地看到我們剛剛設定的 `book-id` 標籤。
+
+![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query3.jpg)
+
+有了這個功能，當客服回報「ID 為 2 的書本頁面載入很慢」時，維運人員不再需要大海撈針。他們可以直接在 Tempo 中使用類似 `{ resource.service.name="demo", book-id="2" }` 的查詢，立刻就能篩選出所有與這本書相關的請求鏈路，從而精準地定位問題根源。
+
 ### 從技術監控到業務洞察
 
 透過這種帶有業務語義的監控方式，我們的監控數據將不再只是冷冰冰的技術指標，而是能提供有價值的商業洞察。
@@ -861,12 +956,12 @@ public class BookService {
 例如，我們現在可以直接在 Grafana 這樣的監控系統中，回答下面這些問題：
 
 - **分析顧客行為**:
-  - `getAllBooks` 被標記為 `book.catalog.browse`，我們可以統計「顧客瀏覽商品目錄的頻率有多高？」
-  - `getBookById` 被標記為 `book.details.view`，我們可以分析「顧客平均會點開幾本書的詳情頁？」
+      - `getAllBooks` 被標記為 `book.catalog.browse`，我們可以統計「顧客瀏覽商品目錄的頻率有多高？」
+      - `getBookById` 被標記為 `book.details.view`，我們可以分析「顧客平均會點開幾本書的詳情頁？」
 - **評估庫存管理效率**:
-  - 透過篩選 `operation` 標籤 (`create`, `update`, `remove`)，我們可以建立儀表板，分別顯示「每日新書上架數量」、「資訊更新頻次」和「商品下架數量」。
+      - 透過篩選 `operation` 標籤 (`create`, `update`, `remove`)，我們可以建立儀表板，分別顯示「每日新書上架數量」、「資訊更新頻次」和「商品下架數量」。
 - **量化業務影響力**:
-  - 我們為不同操作定義了 `business_impact` 標籤（如 `high`, `medium`）。現在可以設定更聰明的警報，例如：「只有當 `business_impact` 為 `high` 的操作（如下架商品）錯誤率超過 1% 時，才發送緊急警報」，讓團隊能專注於真正重要的問題。
+      - 我們為不同操作定義了 `business_impact` 標籤（如 `high`, `medium`）。現在可以設定更聰明的警報，例如：「只有當 `business_impact` 為 `high` 的操作（如下架商品）錯誤率超過 1% 時，才發送緊急警報」，讓團隊能專注於真正重要的問題。
 
 總之，`@Observed` 的這種用法，能讓監控數據對整個團隊（包括產品、營運和管理層）都產生價值。
 
