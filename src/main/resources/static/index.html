@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Full-Stack Observability Demo</title>
+    <style>
+        body { font-family: sans-serif; padding: 2em; }
+        button { font-size: 1.2em; padding: 0.5em 1em; }
+        #result { margin-top: 1em; font-weight: bold; }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-sdk@^1/dist/bundle/faro-web-sdk.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-tracing@^1/dist/bundle/faro-web-tracing.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-transport-otlp-http@^1/dist/bundle/faro-transport-otlp-http.iife.js"></script>
+
+    <script>
+        // 確保在所有函式庫載入後執行初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing Grafana Faro...');
+            console.log('Available objects:', {
+                GrafanaFaroWebSdk: window.GrafanaFaroWebSdk,
+                GrafanaFaroWebTracing: window.GrafanaFaroWebTracing,
+                GrafanaFaroTransportOtlpHttp: window.GrafanaFaroTransportOtlpHttp
+            });
+
+            try {
+                const { initializeFaro, getWebInstrumentations } = window.GrafanaFaroWebSdk;
+                const { TracingInstrumentation } = window.GrafanaFaroWebTracing;
+                const { OtlpHttpTransport } = window.GrafanaFaroTransportOtlpHttp;
+
+                const faro = initializeFaro({
+                    // 應用程式標識
+                    app: {
+                        // 關鍵：設定前端服務名稱，以區別於後端
+                        name: 'my-app-frontend',
+                        version: '1.0.0',
+                        // 可選，但建議設定環境
+                        environment: 'development'
+                    },
+
+                    // 明確設置 OpenTelemetry resource 屬性
+                    otelResourceAttributes: {
+                        'service.name': 'my-app-frontend',
+                        'service.version': '1.0.0',
+                        'deployment.environment': 'development'
+                    },
+
+                    // 自動檢測配置
+                    instrumentations: [
+                        // 基本的 Web 檢測器（包括頁面載入、錯誤等）
+                        ...getWebInstrumentations(),
+                        // 追蹤檢測器（用於 fetch、XHR 等）
+                        new TracingInstrumentation()
+                    ],
+
+                    // 傳輸器配置
+                    transports: [
+                        new OtlpHttpTransport({
+                            // 根據官方文件使用正確的參數名稱
+                            tracesURL: 'http://localhost:4318/v1/traces',
+                            logsURL: 'http://localhost:4318/v1/logs',
+                            
+                            // 添加請求選項
+                            requestOptions: {
+                                headers: {
+                                    // 可以添加額外的標頭如果需要
+                                }
+                            },
+                            
+                            // 緩衝設置
+                            bufferSize: 100,
+                            concurrency: 5,
+                        })
+                    ],
+
+                    // 添加調試模式
+                    debug: true,
+                });
+
+                console.log('Grafana Faro initialized successfully:', faro);
+
+                // 將 faro API 附加到 window 物件，以便在控制台中進行調試
+                window.faro = faro;
+
+                // 測試發送一個初始事件
+                faro.api.pushEvent('page_loaded', { timestamp: Date.now() });
+                console.log('Initial event sent');
+
+            } catch (error) {
+                console.error('Failed to initialize Grafana Faro:', error);
+            }
+
+            // 為按鈕添加事件監聽器
+            const getBooksButton = document.getElementById('getBooksButton');
+            const resultDiv = document.getElementById('result');
+
+            getBooksButton.addEventListener('click', () => {
+                console.log('Button clicked, making API request...');
+                resultDiv.textContent = '載入書本列表中...';
+                
+                // 手動創建一個 span 來測試追蹤
+                if (window.faro && window.faro.api) {
+                    window.faro.api.pushEvent('button_clicked', { action: 'get_books' });
+                }
+                
+                // 使用 fetch 調用後端 API
+                // TracingInstrumentation 將自動為此請求注入 'traceparent' 標頭
+                fetch('/books')
+                  .then(response => {
+                      console.log('API response received:', response.status);
+                      if (!response.ok) {
+                          throw new Error('Network response was not ok');
+                      }
+                      return response.json();
+                  })
+                  .then(data => {
+                        console.log('Books data received:', data);
+                        if (Array.isArray(data) && data.length > 0) {
+                            const bookList = data.map(book => 
+                                `📚 ${book.title} - ${book.author} (${book.publishYear || 'N/A'})`
+                            ).join('<br>');
+                            resultDiv.innerHTML = `找到 ${data.length} 本書：<br>${bookList}`;
+                        } else {
+                            resultDiv.textContent = '目前沒有書本資料，請先新增一些書本。';
+                        }
+                        // 我們也可以手動發送一個事件
+                        if (window.faro && window.faro.api) {
+                            window.faro.api.pushEvent('books_fetched', { count: data.length });
+                        }
+                    })
+                  .catch(error => {
+                        console.error('API request failed:', error);
+                        resultDiv.textContent = '載入書本列表時發生錯誤。';
+                        // 手動捕獲並發送錯誤
+                        if (window.faro && window.faro.api) {
+                            window.faro.api.pushError(error);
+                        }
+                    });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Grafana Faro + Spring Boot Demo</h1>
+    <p>Click the button to get a list of books. This action will trigger a frontend trace, which is correlated with a backend trace.</p>
+    <button id="getBooksButton">Get Books</button>
+    <div id="result"></div>
+</body>
+</html>

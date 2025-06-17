@@ -1235,6 +1235,163 @@ logging:
 
 ---
 
+## 🔬 現代化可觀測性 (Observability) - 第四部分：全棧追蹤與 Grafana Faro 整合 (選用)
+
+在現代化的 Web 應用中，僅僅監控後端服務是不夠的。完整的可觀測性需要涵蓋從用戶瀏覽器到後端資料庫的全鏈路追蹤。本專案展示了如何使用 **Grafana Faro** 實現前端可觀測性，並與後端 OpenTelemetry 追蹤無縫整合。
+
+### Grafana Faro 整合實現
+
+#### 前端追蹤配置 (`src/main/resources/static/index.html`)
+
+我們在前端頁面中整合了 Grafana Faro，實現了完整的前端可觀測性：
+
+```html
+<!-- 載入 Grafana Faro 相關 CDN 套件 -->
+<script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-sdk@^1/dist/bundle/faro-web-sdk.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-tracing@^1/dist/bundle/faro-web-tracing.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grafana/faro-transport-otlp-http@^1/dist/bundle/faro-transport-otlp-http.iife.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const { initializeFaro, getWebInstrumentations } = window.GrafanaFaroWebSdk;
+    const { TracingInstrumentation } = window.GrafanaFaroWebTracing;
+    const { OtlpHttpTransport } = window.GrafanaFaroTransportOtlpHttp;
+
+    const faro = initializeFaro({
+        // 應用程式標識
+        app: {
+            name: 'my-app-frontend',
+            version: '1.0.0',
+            environment: 'development'
+        },
+
+        // 明確設置 OpenTelemetry resource 屬性
+        otelResourceAttributes: {
+            'service.name': 'my-app-frontend',
+            'service.version': '1.0.0',
+            'deployment.environment': 'development'
+        },
+
+        // 自動檢測配置
+        instrumentations: [
+            ...getWebInstrumentations(),      // 基本 Web 檢測器
+            new TracingInstrumentation()      // 追蹤檢測器（自動為 fetch 注入 traceparent）
+        ],
+
+        // OTLP 傳輸器配置
+        transports: [
+            new OtlpHttpTransport({
+                tracesURL: 'http://localhost:4318/v1/traces',
+                logsURL: 'http://localhost:4318/v1/logs',
+                bufferSize: 100,
+                concurrency: 5,
+            })
+        ],
+
+        debug: true,
+    });
+
+    // 測試發送初始事件
+    faro.api.pushEvent('page_loaded', { timestamp: Date.now() });
+});
+</script>
+```
+
+#### 自動前後端追蹤關聯
+
+當用戶點擊「Get Books」按鈕時，Faro 的 `TracingInstrumentation` 會自動：
+
+1. **創建前端 Span**：記錄用戶操作和 API 請求
+2. **注入 traceparent 標頭**：在 `fetch('/books')` 請求中自動添加追蹤上下文
+3. **關聯後端追蹤**：Spring Boot 接收到 traceparent 標頭，建立關聯的後端 Span
+
+```javascript
+// 實際的事件處理邏輯
+getBooksButton.addEventListener('click', () => {
+    // 手動發送自訂事件
+    if (window.faro && window.faro.api) {
+        window.faro.api.pushEvent('button_clicked', { action: 'get_books' });
+    }
+    
+    // Fetch API 會被 TracingInstrumentation 自動追蹤
+    fetch('/books')
+      .then(response => {
+          // 處理回應...
+          if (window.faro && window.faro.api) {
+              window.faro.api.pushEvent('books_fetched', { count: data.length });
+          }
+      })
+      .catch(error => {
+          // 自動錯誤追蹤
+          if (window.faro && window.faro.api) {
+              window.faro.api.pushError(error);
+          }
+      });
+});
+```
+
+### 全棧追蹤在 Tempo 中的效果
+
+整合 Grafana Faro 後，您可以在 Tempo 中看到完整的前後端追蹤鏈路：
+
+![Tempo 全棧追蹤查詢](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query4.jpg)
+
+如圖所示，現在可以在 Tempo 中查詢到：
+
+- **前端服務** (`my-app-frontend`)：用戶互動、頁面載入、API 請求
+- **後端服務** (`demo`)：API 處理、業務邏輯、資料庫操作
+- **完整鏈路**：從用戶點擊到資料庫查詢的端到端追蹤
+
+### 實用的全棧追蹤查詢
+
+#### 1. 查詢前端追蹤
+
+```traceql
+{resource.service.name="my-app-frontend"}
+```
+
+#### 2. 查詢後端追蹤
+
+```traceql
+{resource.service.name="demo"}
+```
+
+#### 3. 查詢完整的前後端鏈路
+
+```traceql
+{resource.service.name="my-app-frontend" || resource.service.name="demo"}
+```
+
+#### 4. 分析跨服務效能
+
+```traceql
+{(resource.service.name="my-app-frontend" || resource.service.name="demo") && duration>1s}
+```
+
+#### 5. 追蹤特定業務操作
+
+```traceql
+{resource.service.name="demo" && name="書本詳情查看"}
+```
+
+### Faro 整合的優勢
+
+1. **零配置自動關聯**：前後端追蹤通過 `traceparent` 標頭自動關聯
+2. **完整用戶體驗**：從瀏覽器點擊到資料庫查詢的完整視圖
+3. **統一監控平台**：前後端數據都匯聚到同一個 Grafana/Tempo 平台
+4. **豐富的上下文**：結合前端用戶行為和後端業務邏輯的完整上下文
+
+### 實際應用場景
+
+- **用戶體驗分析**：分析從用戶點擊到頁面更新的完整時間線
+- **效能瓶頸定位**：快速判斷慢請求是前端問題還是後端問題  
+- **錯誤根因分析**：追蹤錯誤從前端傳播到後端的完整鏈路
+- **業務流程監控**：監控關鍵業務流程在前後端的執行情況
+
+通過 Grafana Faro 的整合，我們實現了真正的全棧可觀測性，為現代化 Web 應用提供了完整的監控解決方案。
+
+---
+
 ## 環境與組態設定
 
 ### 容器化環境 (`compose.yaml`)
