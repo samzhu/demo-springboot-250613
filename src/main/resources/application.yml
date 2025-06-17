@@ -40,5 +40,10 @@ server:
     include-binding-errors: always
 
 
+logging:
+  structured:
+    format:
+      file: logstash
+
 
 
