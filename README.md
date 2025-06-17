@@ -293,8 +293,14 @@ MapStruct 是一個專門處理「物件轉換」的工具。它能自動幫我�
 ```groovy
 tasks.withType(JavaCompile) {
     options.compilerArgs = [
-            // 告訴 MapStruct，產生的轉換器要是一個 Spring Bean
-            '-Amapstruct.defaultComponentModel=spring'
+        // 告訴 MapStruct，產生的轉換器要是一個 Spring Bean，方便注入
+        '-Amapstruct.defaultComponentModel=spring',
+        // 產生的程式碼中不包含時間戳，這能確保每次建置的結果都完全相同
+        '-Amapstruct.suppressGeneratorTimestamp=true',
+        // 在建置過程中啟用詳細日誌，方便除錯
+        '-Amapstruct.verbose=true',
+        // 保留方法的參數名稱，這對於 Spring Cache 解析 SpEL 表達式 (如 #id) 至關重要
+        '-parameters'
     ]
 }
 ```
@@ -589,6 +595,74 @@ tasks.withType(JavaCompile) {
 - **寫入影響小**：更新或刪除操作對快取的影響降到最低，只動一個鍵，不會影響到其他有效的快取資料。
 
 ---
+
+## 🚀 實際操作：API 測試範例
+
+當專案成功啟動後，你可以使用 `curl` 或任何 API 測試工具（如 Postman）來與應用程式互動。以下是兩個基本的操作範例。
+
+### 1\. 新增一本書 (POST /books)
+
+這個指令會向 `/books` 端點發送一個 POST 請求，新增一本書的資料。
+
+**指令：**
+
+```bash
+curl --location 'http://localhost:8080/books' \
+--header 'Content-Type: application/json' \
+--data '{
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "isbn": "9780345339686",
+    "price": 15.99,
+    "publishYear": 1937
+}'
+```
+
+**預期回應：**
+如果成功，伺服器會回傳 `201 Created` 狀態碼，以及剛剛建立的書本資料（包含由資料庫產生的 `id`）。
+
+```json
+{
+    "id": 1,
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "isbn": "9780345339686",
+    "price": 15.99,
+    "publishYear": 1937
+}
+```
+
+### 2\. 查詢一本書 (GET /books/{id})
+
+這個指令會向 `/books/1` 端點發送一個 GET 請求，查詢 `id` 為 1 的書本資料。
+
+**指令：**
+
+```bash
+curl --location 'http://localhost:8080/books/1'
+```
+
+**預期回應：**
+伺服器會回傳 `200 OK` 狀態碼，以及對應的書本資料。
+
+```json
+{
+    "id": 1,
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "isbn": "9780345339686",
+    "price": 15.99,
+    "publishYear": 1937
+}
+```
+
+**觀察快取效果：**
+你可以嘗試連續執行這個查詢指令兩次。
+
+- **第一次執行**：在應用程式的日誌中，你會看到一行類似 `從資料庫獲取書本 ID: 1` 的訊息，表示這次查詢有實際訪問資料庫。
+- **第二次執行**：這行日誌將不會出現。這是因為查詢結果已經被存在 Redis 快取中，應用程式直接從快取回傳資料，大幅提升了回應速度。你也可以在 Grafana 的 Tempo 追蹤視圖中，清楚地看到第二次請求的追蹤鏈變短了。
+
+--
 
 ## 🚀 效能提升：Java 21 虛擬執行緒
 
