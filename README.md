@@ -311,8 +311,8 @@ tasks.withType(JavaCompile) {
 
 ```java
 @Mapper(
-    componentModel = "spring", // 讓 MapStruct 產生的實作類變成一個 Spring Bean
-    unmappedTargetPolicy = ReportingPolicy.IGNORE // 如果目標物件有對應不到的欄位，就忽略它
+    unmappedTargetPolicy = ReportingPolicy.IGNORE,  // 忽略目標物件中未被映射的屬性，避免編譯時產生警告
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE // 當來源物件屬性為 null 時，不更新目標物件的對應屬性
 )
 public interface BookMapper {
     // 將 BookDto (DTO) 轉換為 Book (Entity)
