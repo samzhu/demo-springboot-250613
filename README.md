@@ -21,21 +21,21 @@ graph TB
         AppService
         DomainModel
         Repository
-        CacheService
+        Cache
     end
 
     User["用戶"] --> WebController
     WebController --> AppService
     AppService --> DomainModel
     AppService --> Repository
-    AppService --> CacheService
+    AppService --> Cache
     Repository --> PostgreSQL
-    CacheService --> Redis
+    Cache --> Redis
 
     classDef container fill:#1168bd,stroke:#0b4884,color:#ffffff
     classDef external fill:#999999,stroke:#6b6b6b,color:#ffffff
 
-    class WebController,AppService,DomainModel,Repository,CacheService container
+    class WebController,AppService,DomainModel,Repository,Cache container
     class User,PostgreSQL,Redis external
 ```
 
