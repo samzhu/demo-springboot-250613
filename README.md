@@ -879,7 +879,7 @@ management:
       tag-fields:
         - book-id # 2. 自動標籤：讓 Micrometer 自動將這個 Baggage 的值，作為一個 Tag 加到所有後續的 Span 上。這是能在 Grafana 看到它的關鍵。
       correlation:
-        enabled: true # 3. 日誌關聯 (強烈建議)
+        enabled: true # 3. 日誌關聯
         fields:
           - book-id # 4. 將 'book-id' 的值也放進日誌的 MDC 中，方便在日誌裡直接看到和搜尋。
 ```
