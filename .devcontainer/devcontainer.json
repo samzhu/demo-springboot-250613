@@ -1,0 +1,101 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/java
+// Base Image Options:
+// There are two approaches to setting up your Java development environment:
+//
+// 1. Using Base Development Image (Recommended for customization):
+//    - Source: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/base/tags
+//    - Base image: mcr.microsoft.com/devcontainers/base:dev-bookworm
+//    - Java installation through devcontainer features:
+//      Source: https://github.com/devcontainers/features/tree/main/src/java
+//      Implementation: ghcr.io/devcontainers/features/java:1
+//      Key capabilities:
+//      * Multiple JDK distributions available: ms (Microsoft), open (OpenJDK), 
+//        oracle (Oracle), tem (Temurin), amzn (Amazon Corretto)
+//      * Version selection: latest, 8, 11, 17, or specific versions like 21.0.5-librca
+//      * Build tool integration: Gradle, Maven, Ant
+//      * Additional tools: Groovy
+//      * Environment setup: Automatic JAVA_HOME and PATH configuration
+//      * SDKMAN! integration for version management
+//
+// 2. Using Pre-built Java Image (Recommended for quick start):
+//    - Source: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/java/tags
+//    - Pre-built image: mcr.microsoft.com/devcontainers/java:dev-21-jdk-bookworm
+//    - Comes with Microsoft JDK 21.0.5-ms pre-installed
+//    - Important: Set java feature to "none" in this case to avoid duplicate installations
+//    - Benefit: Faster container startup, pre-configured Java environment
+{
+    // Container name for better identification
+    "name": "Java Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+    // "build": {
+    //     "dockerfile": "Dockerfile",
+    //     // Update 'VARIANT' to pick an Ubuntu version: jammy / ubuntu-22.04, focal / ubuntu-20.04, bionic /ubuntu-18.04
+    //     // Use ubuntu-22.04 or ubuntu-18.04 on local arm64/Apple Silicon.
+    //     "args": {
+    //         "VARIANT": "ubuntu-22.04"
+    //     }
+    // },
+    "hostRequirements": {
+        "cpus": 2
+    },
+    // Feature configurations
+    "features": {
+        // Java Development Kit
+        // Configuration options: https://github.com/devcontainers/features/blob/main/src/java/devcontainer-feature.json
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "21.0.5-librca", // Liberica JDK 21
+            "installMaven": "false", // Maven not required
+            "installGradle": "false" // Include Gradle build tool
+        },
+        // Sonarlint need
+        // Node.js development environment
+        // "ghcr.io/devcontainers/features/node:1": {},
+        // Google Cloud CLI tools uncomment below features as needed
+        // "ghcr.io/dhoeric/features/google-cloud-cli:1": {},
+        // Docker support from inside container
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "mounts": [
+        // 主要的依賴套件 cache
+        "source=${localEnv:HOME}/.gradle/caches,target=/home/vscode/caches,type=bind,consistency=cached"
+    ],
+    "containerEnv": {
+        "GRADLE_USER_HOME": "/home/vscode", // required because the java feature is not setting this correctly
+        "M2": "/home/vscode" // required because the java feature is not setting this correctly
+    },
+    // Make container ports accessible on host machine
+    "forwardPorts": [
+        8080
+    ],
+    // Execute after container is fully created
+    "postCreateCommand": "bash ./.devcontainer/scripts/postCreateCommand.sh",
+    // VS Code specific customizations , only install minimal required extensions for container startup
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack"
+            ],
+            "settings": {
+                "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+                "java.configuration.runtimes": [
+                    {
+                        "name": "JavaSE-21",
+                        "path": "/usr/local/sdkman/candidates/java/current",
+                        "default": true
+                    }
+                ],
+                "sonarlint.ls.javaHome": "/usr/local/sdkman/candidates/java/current",
+                "java.import.gradle.wrapper.enabled": true,
+                "java.import.gradle.user.home": "/home/vscode",
+                "java.gradle.buildServer.enabled": "off", // 暫時關閉 build server
+                "gradle.nestedProjects": true,
+                "gradle.autoDetect": "on"
+            }
+        }
+    },
+    // Using non-root user for better security
+    // More info: https://aka.ms/dev-containers-non-root
+    "remoteUser": "vscode"
+}

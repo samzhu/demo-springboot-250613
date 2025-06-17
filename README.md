@@ -1,4 +1,11 @@
-# Spring Boot 3 現代化專案實戰手冊 (新手友善版)
+<a href="https://studio.firebase.google.com/import?url=https%3A%2F%2Fgithub.com%2Fsamzhu%2Fdemo-springboot-250613">
+  <img
+    height="32"
+    alt="Try in Firebase Studio"
+    src="https://cdn.firebasestudio.dev/btn/try_bright_32.svg">
+</a>
+
+# Spring Boot 3 現代化專案實戰手冊
 
 ## 專案簡介
 
@@ -606,8 +613,8 @@ spring:
 
 在寫任何監控程式碼之前，我們需要先理解 Spring Boot 3 的觀測哲學。Micrometer 的核心開發者 Jonatan Ivanov 說過：
 
-> “In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…”  
-> “在這些應用程式中，我沒有手動建立任何觀測，因為我所需要的基本上都已經被我使用的框架/函式庫自動檢測了…”  
+> “In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…"  
+> "在這些應用程式中，我沒有手動建立任何觀測，因為我所需要的基本上都已經被我使用的框架/函式庫自動檢測了…"  
 
 這句話揭示了一個核心思想：**優先依賴自動化檢測 (Rely on Automatic Instrumentation First)**。
 
@@ -632,8 +639,8 @@ Micrometer 是 Spring 官方指定的觀測門面，它提供了一套標準 API
 
 `@Observed` 註解，正是用來幫我們的自訂業務邏輯加上觀測能力的最佳實踐。如同 Jonatan Ivanov 所說：
 
-> “The idea... was that we want the users to instrument their code once using a single API and have multiple benefits out of it (e.g. metrics, tracing, logging).”
-> “我們的初衷是，希望使用者能用一套 API 來檢測他們的程式碼一次，並從中獲得多重效益，例如：指標、追蹤、日誌。”
+> "The idea... was that we want the users to instrument their code once using a single API and have multiple benefits out of it (e.g. metrics, tracing, logging)."
+> "我們的初衷是，希望使用者能用一套 API 來檢測他們的程式碼一次，並從中獲得多重效益，例如：指標、追蹤、日誌。"
 
 這就是 `@Observed` 的核心理念：**「一次檢測，多重效益」**。
 
