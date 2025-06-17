@@ -921,21 +921,25 @@ sequenceDiagram
 
 ### 追蹤 (Traces) 的藝術：使用 Tempo 和 TraceQL
 
-選擇 `tempo` 數據源。我們可以使用 TraceQL 語言來查詢追蹤。
+在 Grafana 的 Explore 頁面，選擇 `tempo` 數據源。我們可以使用 TraceQL 語言來查詢追蹤。
 
 1. **按服務名稱查詢**:
     在 `application.yml` 中，我們定義了 `spring.application.name: demo`。這個名稱會被 OpenTelemetry 當作 `service.name`。因此，最常用的查詢就是篩選出所有來自我們應用程式的追蹤。
 
     ```text
-    { .service.name="demo" }
+    {resource.service.name="demo"}
     ```
+
+    ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query1.jpg)
 
 2. **按自訂的 Span 名稱查詢**:
     我們在 `BookService` 中用 `@Observed(contextualName = "書本詳情查看")` 為方法加上了有意義的名稱。這個名稱會變成 Span 的名字。這可以讓我們精確地找到特定業務邏輯的追蹤。
 
     ```text
-    { span.name="書本詳情查看" }
+    {name="書本詳情查看"}
     ```
+
+    ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query2.jpg)
 
 3. **分析追蹤視圖 (Waterfall View)**:
     點擊任意一個查詢結果，您會看到一個瀑布圖。
@@ -944,45 +948,47 @@ sequenceDiagram
 
 ### 指標 (Metrics) 的力量：使用 Mimir 和 PromQL
 
-選擇 `mimir` 數據源。我們使用 PromQL (Prometheus Query Language) 來查詢指標。
+在新版本中，儘管底層儲存指標的技術是 Mimir，但它提供的是與 Prometheus 完全相容的查詢端點。因此，數據源被直接命名為 `prometheus`，讓使用者可以專注於使用標準的 PromQL (Prometheus Query Language) 進行查詢，這也是業界最廣泛使用的指標查詢語言。
 
 #### OTLP 到 Prometheus 的名稱轉換
 
-理解一個關鍵的轉換規則至關重要：Micrometer 產生的指標名稱，在透過 OTLP 匯出到 Mimir/Prometheus 時，格式會被轉換：
+理解一個關鍵的轉換規則至關重要：Micrometer 產生的指標名稱，在透過 OTLP 匯出到 Mimir/Prometheus 時，格式會被轉換。
 
 - 指標名稱中的點 `.` 會被轉換為下劃線 `_`。
 - `service.name` (`demo`) 這個資源屬性會被映射為 `job` 標籤。
-- 計時器 (`@Observed` 或 HTTP 請求) 會自動產生 `_count`, `_sum`, `_bucket` 等後綴的指標。
+- 計時器 (`@Observed` 或 HTTP 請求) 會自動產生以 `_milliseconds` 為單位，並帶有 `_count` (計數), `_sum` (總和), `_bucket` (直方圖分桶) 等後綴的指標。這是由於較新版本的 Micrometer 為了提高精確度，預設使用毫秒作為時間單位。
 
 | 原始名稱 (`@Observed` name) | 轉換後的 PromQL 指標 (範例) |
 | :--- | :--- |
-| `book.details.view` | `book_details_view_seconds_count`, `book_details_view_seconds_sum` |
-| HTTP Server Requests | `http_server_requests_seconds_count` |
+| `book.details.view` | `book_details_view_milliseconds_count`, `book_details_view_milliseconds_sum` |
+| HTTP Server Requests | `http_server_requests_milliseconds_count` |
 
 #### 實用 PromQL 查詢
 
 1. **查詢 API 每秒請求數 (RPS)**:
 
     ```promql
-    rate(http_server_requests_seconds_count{job="demo"}[5m])
+    rate(http_server_requests_milliseconds_count{job="demo"}[5m])
     ```
 
     這個查詢計算了在過去 5 分鐘窗口內，`demo` 服務每秒的平均請求數。
 
-2. **查詢「查看書本詳情」操作的 P95 延遲**:
+    ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/prometheus_query1.jpg)
+
+2. **查詢「查看書本詳情」操作的 P95 延遲 (單位：毫秒)**:
 
     ```promql
-    histogram_quantile(0.95, sum(rate(book_details_view_seconds_bucket{job="demo"}[5m])) by (le))
+    histogram_quantile(0.95, sum(rate(book_details_view_milliseconds_bucket{job="demo"}[5m])) by (le))
     ```
 
-    這是一個更高級的查詢，它利用直方圖 (`_bucket`) 數據，計算出 95% 的「查看書本詳情」操作的延遲時間。
+    這是一個更高級的查詢，它利用直方圖 (`_bucket`) 數據，計算出 95% 的「查看書本詳情」操作的延遲時間，結果以毫秒為單位。
 
 3. **利用自訂標籤分析**:
     我們在 `@Observed` 中定義了 `lowCardinalityKeyValues`。例如 `operation="get_by_id"`。這個標籤可以用來做更精細的分析。
 
     ```promql
-    // 計算所有 "get_by_id" 操作的次數
-    sum(increase(book_details_view_seconds_count{job="demo", operation="get_by_id"}[5m]))
+    // 計算所有 "get_by_id" 操作在過去5分鐘內的總次數
+    sum(increase(book_details_view_milliseconds_count{job="demo", operation="get_by_id"}[5m]))
     ```
 
 #### Exemplars 的魔法
@@ -991,23 +997,42 @@ sequenceDiagram
 
 ### 日誌 (Logs) 的關聯：使用 Loki 和 LogQL
 
-最後，選擇 `loki` 數據源。我們使用 LogQL 來查詢日誌。得益於 OpenTelemetry 的自動整合，現在每一行日誌都自動包含了 `trace_id` 和 `span_id`。
+最後，選擇 `loki` 數據源。我們使用 LogQL 來查詢日誌。
+
+要讓日誌能夠被後端的 `otel-lgtm` 成功收集與解析，前提是需要**啟用 Spring Boot 的檔案日誌功能，並將其格式設定為 `logstash` JSON**。這能確保所有寫入檔案的日誌都具備 Loki 喜愛的結構化格式。您可以透過在 `application.yml` 中加入類似以下的設定來達成：
+
+```yaml
+logging:
+  structured:
+    format:
+      file: logstash     # 將檔案日誌的格式設為 logstash (JSON)
+```
+
+設定完成後，得益於 OpenTelemetry 的自動整合，`trace_id` 和 `span_id` 等關鍵追蹤資訊會被自動加入到 JSON 日誌中，這使得日誌與追蹤的關聯無比強大。
 
 1. **查詢應用的所有日誌**:
-    Loki 中的 `job` 標籤可能由 `service.namespace/service.name` 組合而成。你可以使用「Log browser」按鈕來查看所有可用的標籤。
+    在 `application.yml` 中定義的 `spring.application.name` 會被自動映射為 Loki 中的 `service_name` 標籤。這是篩選特定應用日誌最直接的方法。
 
     ```logql
-    {job="demo/demo"}
+    {service_name="demo"}
     ```
 
+    ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/loki_query1.jpg)
+
 2. **從追蹤跳轉到日誌 (Trace to Logs)**:
-    這是最常用的功能。在 Tempo 的追蹤瀑布圖中，點擊任一個 Span，您通常會看到一個「Logs for this span」的按鈕。點擊它，Grafana 會自動生成一個 LogQL 查詢，篩選出與該 Span 的 `trace_id` 和 `span_id` 相關的所有日誌。
+    這是最常用的功能。由於 `trace_id` 已經包含在我們輸出的 JSON 日誌中，`otel-lgtm` 中的日誌代理會智能地將其提取為可供索引的標籤。因此，在 Tempo 的追蹤瀑布圖中，點擊任一個 Span，再點擊「Logs for this span」按鈕，Grafana 依然可以精準地為您篩選出所有相關的日誌。
 
 3. **手動通過 Trace ID 查詢日誌**:
-    您也可以從 Tempo 複製一個 `trace_id`，然後在 Loki 的查詢框中手動查詢，這將顯示出一個完整請求鏈路上的所有相關日誌。
+    您也可以從 Tempo 複製一個 `trace_id`，然後在 Loki 中直接使用這個標籤來查詢，這比解析全文更高效。
 
     ```logql
-    {job="demo/demo"} | json | line_format "{{.message}}" | trace_id = "複製過來的_trace_id"
+    {service_name="demo", trace_id="複製過來的_trace_id"}
+    ```
+
+    如果您還想進一步處理日誌的 JSON 內容（例如，只顯示 `message` 欄位），可以加上 `json` 和 `line_format` 過濾器：
+
+    ```logql
+    {service_name="demo", trace_id="複製過來的_trace_id"} | json | line_format "{{.message}}"
     ```
 
 ---
