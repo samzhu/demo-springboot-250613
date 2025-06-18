@@ -12,61 +12,46 @@ spring:
       port: 6379
 
 springdoc:
-  show-actuator: false # 是否要顯示 actuator 端點
+  show-actuator: true # 開發環境顯示 actuator 端點
   api-docs:
     enabled: true # 啟用 Swagger UI
 
-# logging:
-#   level:
-#     root: info
-#     com.example.demo: debug
+logging:
+  level:
+    root: info
+    com.example.demo: debug # 開發環境啟用 debug 日誌
+    org.springframework.web: debug # 顯示 web 請求詳細資訊
 
 management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: "development" # 覆蓋為開發環境
+  tracing:
+    sampling:
+      probability: 1.0 # 開發環境捕獲所有追蹤
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "*" # 開發環境開放所有端點
+  endpoint:
+    health:
+      show-details: always # 顯示詳細健康狀態
   otlp:
     metrics:
       export:
         enabled: true
+        url: http://localhost:4318/v1/metrics
+        step: 10s # 縮短間隔以便測試
+    tracing:
+      export:
+        enabled: true
+      endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        enabled: true
+      endpoint: http://localhost:4318/v1/logs
 
-
-# # Actuator 監控設定
-# management:
-#   server:
-#     port: 8080
-#   endpoints:
-#     web:
-#       exposure:
-#         include: "*" # 開發環境開放所有端點
-#   endpoint:
-#     health:
-#       show-details: always # 顯示詳細健康狀態
-#   info:
-#     git:
-#       mode: full # 顯示完整的 Git 資訊
-#   observations:
-#     annotations:
-#       enabled: true
-#   otlp:
-#     metrics:
-#       export:
-#         enabled: true
-#         url: http://localhost:4318/v1/metrics
-#     tracing:
-#       export:
-#         enabled: true
-#       endpoint: http://localhost:4318/v1/traces
-#     logging:
-#       export:
-#         enabled: true
-#       endpoint: http://localhost:4318/v1/logs
-#   tracing:
-#     sampling:
-#       probability: 1.0
-
-# server:
-#   error:
-#     include-message: always
-#     include-binding-errors: never
+server:
+  error:
+    include-message: always # 開發環境顯示詳細錯誤
+    include-binding-errors: always

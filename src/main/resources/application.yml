@@ -1,6 +1,6 @@
 spring:
   application:
-    name: demo # 這會作為 OTel 中的 service.name，非常重要
+    name: demo
   threads:
     virtual:
       enabled: true
@@ -12,12 +12,12 @@ management:
   opentelemetry:    # OpenTelemetry 資源屬性，將附加到所有遙測訊號
     resource-attributes:
       service.version: "1.0.0"
-      deployment.environment: "development"
+      deployment.environment: "production" # 預設為正式環境
   # Tracing 相關配置
   tracing:
     sampling:
-      # 在開發和測試環境中，設定為 1.0 以捕獲所有追蹤，確保不會遺漏任何請求 [2]
-      probability: 1.0
+      # 正式環境建議較低的採樣率以降低效能影響
+      probability: 0.1
     baggage:
       enabled: true  # 啟用 Baggage 功能
       remote-fields: # 聲明需要跨服務傳播的業務欄位
@@ -27,6 +27,10 @@ management:
       correlation:   # 將 Baggage 欄位加入到日誌的 MDC 中，方便日誌關聯
         fields:
           - book-id
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus" # 正式環境只開放必要端點
   otlp:
     metrics:
       export:
@@ -45,14 +49,16 @@ management:
 server:
   shutdown: graceful
   error:
-    include-message: always
-    include-binding-errors: always
-
+    include-message: never # 正式環境不暴露詳細錯誤訊息
+    include-binding-errors: never
 
 logging:
   structured:
     format:
       file: logstash
+  level:
+    root: info # 正式環境使用 info 等級
+    com.example.demo: info
 
 
 

@@ -1,0 +1,74 @@
+spring:
+  # 資料庫連線設定 (SIT 環境通常使用獨立的測試資料庫)
+  datasource:
+    url: jdbc:postgresql://sit-db:5432/mydatabase
+    username: ${DB_USERNAME:myuser} # 支援環境變數
+    password: ${DB_PASSWORD:secret}
+  main:
+    banner-mode: off # SIT 環境關閉 banner 減少日誌雜訊
+  data:
+    redis:
+      host: ${REDIS_HOST:sit-redis}
+      port: ${REDIS_PORT:6379}
+
+springdoc:
+  show-actuator: true # SIT 環境顯示 actuator 端點方便測試
+  api-docs:
+    enabled: true # 啟用 Swagger UI 方便 API 測試
+
+logging:
+  level:
+    root: info
+    com.example.demo: debug # SIT 環境啟用詳細日誌以便問題排查
+    org.springframework.web: info
+    org.springframework.transaction: debug # 監控事務行為
+    org.springframework.data.jpa: debug # 監控 JPA 查詢
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: "sit" # SIT 環境標識
+      service.instance.id: ${HOSTNAME:unknown} # 容器實例識別
+  tracing:
+    sampling:
+      probability: 1.0 # SIT 環境需要完整追蹤以便問題排查
+  endpoints:
+    web:
+      exposure:
+        include: "*" # SIT 環境開放所有監控端點
+  endpoint:
+    health:
+      show-details: always # 顯示詳細健康狀態
+    info:
+      git:
+        mode: full # 顯示完整的 Git 資訊以便版本追蹤
+  prometheus:
+    metrics:
+      export:
+        enabled: true # 啟用 Prometheus 指標匯出
+        step: 30s # SIT 環境較頻繁的指標收集
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true # 啟用 HTTP 請求的百分位數直方圖
+      percentiles:
+        http.server.requests: 0.5,0.9,0.95,0.99 # 詳細的百分位數
+  otlp:
+    metrics:
+      export:
+        enabled: true
+        url: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://sit-otel-collector:4318/v1/metrics}
+        step: 15s # SIT 環境加快指標匯出頻率
+    tracing:
+      export:
+        enabled: true
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://sit-otel-collector:4318/v1/traces}
+    logging:
+      export:
+        enabled: true
+      endpoint: ${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT:http://sit-otel-collector:4318/v1/logs}
+
+server:
+  error:
+    include-message: always # SIT 環境顯示詳細錯誤以便測試
+    include-binding-errors: always

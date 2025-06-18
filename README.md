@@ -147,6 +147,185 @@ graph TB
 
 ---
 
+## ⚙️ 環境配置與設定檔管理
+
+### 配置檔案載入優先級
+
+Spring Boot 會按照以下優先級載入配置檔案：
+
+1. **`application.yml`** - 基礎共用配置
+2. **`application-{profile}.yml`** - 環境特定配置（會覆蓋基礎配置）
+
+Spring 在開發階段也會讀取 `config/` 資料夾下的檔案，例如 `application-local.yml` 就是專為本地開發而設計的。
+
+### 配置檔案架構設計
+
+我們的配置檔案採用分層設計，確保不同環境和部署平台的需求都能被妥善處理。
+
+#### 基礎設定檔 (`src/main/resources/`)
+
+這些檔案會被打包進 Docker Image 中，適用於所有環境的共用設定，或針對特定雲端平台的專門優化。
+
+| 檔案 | 用途 | 說明 |
+|------|------|------|
+| `application.yml` | 基礎共用設定 | 所有環境共用的基本配置 |
+| `application-gcp.yml` | Google Cloud Platform | 啟用 GCP 特有服務整合 |
+| `application-aws.yml` | Amazon Web Services | 啟用 AWS 特有服務整合 |
+
+**GCP 環境範例**：
+```yaml
+# application-gcp.yml
+spring:
+  config:
+    import: sm@  # 啟用 Google Secret Manager
+  datasource:
+    password: ${sm@project_db_password}  # 從 Secret Manager 讀取密碼
+
+management:
+  opentelemetry:
+    resource-attributes:
+      cloud.provider: "gcp"
+  endpoint:
+    health:
+      group:
+        gcp:
+          include: "db,pubsub,gcs,spanner"  # GCP 服務健康檢查
+```
+
+#### 環境特定設定檔 (`config/`)
+
+這些檔案**不會**被打包進 Docker Image，需要在部署時從外部掛載。這種設計遵循了 [12-Factor App Codebase](https://12factor.net/) 的原則，讓同一份程式碼可以在不同環境中運行。
+
+| 檔案 | 環境 | 說明 |
+|------|------|------|
+| `application-local.yml` | 本地開發 | 開發者電腦上的設定 |
+| `application-ut.yml` | 單元測試 | 單元測試環境 |
+| `application-sit.yml` | 系統整合測試 | SIT 測試環境 |
+| `application-uat.yml` | 使用者驗收測試 | UAT 測試環境 |
+| `application-prod.yml` | 正式環境 | 生產環境（通常不會直接存在程式碼庫中） |
+| `application-prod-example.yml` | 正式環境範本 | 生產環境的配置參考範本 |
+
+### 多環境啟動範例
+
+#### 本地開發
+
+```bash
+# 純本地環境
+./gradlew bootRun --args='--spring.profiles.active=local'
+
+# 本地環境 + 模擬 GCP 服務
+./gradlew bootRun --args='--spring.profiles.active=local,gcp'
+```
+
+#### 測試環境
+
+```bash
+# SIT 環境在 GCP 上
+./gradlew bootRun --args='--spring.profiles.active=sit,gcp'
+
+# UAT 環境在 AWS 上
+./gradlew bootRun --args='--spring.profiles.active=uat,aws'
+```
+
+#### 容器化部署
+
+```bash
+# Docker 容器啟動（透過環境變數）
+docker run -e SPRING_PROFILES_ACTIVE=sit,gcp my-app:latest
+
+# Kubernetes 部署（透過 ConfigMap 和 Secret）
+kubectl apply -f k8s-configs/
+```
+
+### 配置安全性最佳實踐
+
+#### 🔐 機密資訊處理
+
+**絕對不要** 將敏感資訊（密碼、API Key、Token）直接寫在配置檔案中。建議的處理方式：
+
+1. **環境變數**：
+
+   ```yaml
+   spring:
+     datasource:
+       password: ${DB_PASSWORD}
+   ```
+
+2. **雲端 Secret Manager**：
+
+   ```yaml
+   # GCP
+   spring:
+     datasource:
+       password: ${sm@project_db_password}
+   
+   # AWS
+   spring:
+     datasource:
+       password: ${ssm@/myapp/db/password}
+   ```
+
+3. **Kubernetes Secret**：
+
+   ```yaml
+   # 透過 volumeMounts 掛載
+   spring:
+     datasource:
+       password: ${file@/etc/secrets/db-password}
+   ```
+
+#### 📊 環境特定調優
+
+不同環境應該有不同的效能調優設定：
+
+```yaml
+# application-local.yml (開發環境)
+management:
+  tracing:
+    sampling:
+      probability: 1.0  # 100% 採樣，方便除錯
+
+# application-prod.yml (正式環境)
+management:
+  tracing:
+    sampling:
+      probability: 0.1  # 10% 採樣，減少效能影響
+```
+
+### VSCode 開發環境設定
+
+建議建立 `.vscode/launch.json` 來簡化開發流程：
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "本地開發環境",
+            "request": "launch",
+            "mainClass": "com.example.demo.DemoApplication",
+            "projectName": "demo-springboot-250613",
+            "env": {
+                "spring.profiles.active": "local"
+            }
+        },
+        {
+            "type": "java",
+            "name": "本地 + GCP 模擬",
+            "request": "launch",
+            "mainClass": "com.example.demo.DemoApplication",
+            "projectName": "demo-springboot-250613",
+            "env": {
+                "spring.profiles.active": "local,gcp"
+            }
+        }
+    ]
+}
+```
+
+---
+
 ## 🛠️ 開發與設定
 
 ### 開發指南
@@ -155,44 +334,9 @@ graph TB
 - 使用 `./gradlew bootRun --args='--spring.profiles.active=local'` 指令，可以用 `local` 設定檔來啟動專案。
 - 在本機開發時，可以到 `http://localhost:8080/swagger-ui.html` 查看和測試 API。
 
-### VSCode 設定
+### IDE 整合
 
-#### 建立 launch.json
-
-你可以手動在專案底下建立一個 `.vscode/launch.json` 檔案。這個檔案的功能是讓你在 VSCode 裡點擊「執行」按鈕時，可以自動帶上特定設定。
-
-例如，下面的設定檔可以讓我們在啟動應用程式時，自動使用 `local-env` 跟 `local` 這兩個環境設定，讓程式去讀取 `application-local.yml` 的內容。
-
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "java",
-            "name": "Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "DemoApplication",
-            "request": "launch",
-            "mainClass": "com.example.demo.DemoApplication",
-            "projectName": "demo-springboot-250613",
-            "env": {
-                "spring.profiles.active": "local-env,local" // ✨ 先載入 local-env 再載入 local 設定檔
-            }
-        },
-        {
-            "type": "java",
-            "name": "TestDemoApplication",
-            "request": "launch",
-            "mainClass": "com.example.demo.TestDemoApplication",
-            "projectName": "demo-springboot-250613"
-        }
-    ]
-}
-```
+關於 VSCode 和其他 IDE 的開發環境設定，請參考上一章節 **⚙️ 環境配置與設定檔管理** 中的詳細說明。
 
 ---
 

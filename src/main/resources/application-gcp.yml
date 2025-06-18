@@ -5,6 +5,67 @@ spring:
   datasource:
     username: ${db.username}
     password: ${db.password}
+    url: ${db.url}
   config:
     import: # 因為要啟用 gcp secret manager
     - sm://
+  cloud:
+    gcp:
+      project-id: ${GOOGLE_CLOUD_PROJECT:demo-project}
+      credentials:
+        location: ${GOOGLE_APPLICATION_CREDENTIALS:}
+      sql:
+        enabled: true
+        instance-connection-name: ${GCP_SQL_INSTANCE_CONNECTION_NAME:}
+        database-name: ${GCP_SQL_DATABASE_NAME:mydatabase}
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: "gcp"
+      cloud.provider: "gcp"
+      cloud.platform: "gcp_kubernetes_engine"
+      service.instance.id: ${HOSTNAME:unknown}
+      cloud.availability_zone: ${GCP_ZONE:unknown}
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACE_SAMPLING_PROBABILITY:0.1}
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus"
+  endpoint:
+    health:
+      show-details: when-authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: true
+        url: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://gcp-otel-collector:4318/v1/metrics}
+    tracing:
+      export:
+        enabled: true
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://gcp-otel-collector:4318/v1/traces}
+    logging:
+      export:
+        enabled: true
+      endpoint: ${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT:http://gcp-otel-collector:4318/v1/logs}
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+  port: ${PORT:8080}
+
+logging:
+  level:
+    root: info
+    com.example.demo: info
+    com.google.cloud: info
+  structured:
+    format:
+      console: logstash
