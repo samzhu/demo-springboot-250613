@@ -31,10 +31,44 @@
 curl http://localhost:8080/actuator/health
 
 # 測試 API - 新增一本書
-curl -X POST http://localhost:8080/books \
-  -H "Content-Type: application/json" \
-  -d '{"title":"測試書籍","author":"測試作者","isbn":"9780123456789","price":299.99}'
+curl --location 'http://localhost:8080/books' \
+--header 'Content-Type: application/json' \
+--data '{
+    "title": "測試書籍",
+    "author": "測試作者",
+    "isbn": "9780123456789",
+    "price": 299.99
+}'
 ```
+
+正確結果:
+
+```json
+{
+    "id": 1,
+    "title": "測試書籍",
+    "author": "測試作者",
+    "isbn": "9780123456789",
+    "publishYear": null,
+    "price": 299.99,
+    "createdAt": "2025-06-19T16:28:01.217281+08:00",
+    "updatedAt": "2025-06-19T16:28:01.217292+08:00"
+}
+```
+
+新增書籍失敗結果:
+
+```json
+{
+    "type": "about:blank",
+    "title": "Bad Request",
+    "status": 400,
+    "detail": "ISBN 已存在",
+    "instance": "/books"
+}
+```
+
+錯誤訊息採用 RFC 9457 規格，詳細說明請參考 [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html)。
 
 查看 Swagger UI（API 文件和測試介面）
 打開瀏覽器：http://localhost:8080/swagger-ui.html

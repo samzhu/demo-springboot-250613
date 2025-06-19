@@ -68,7 +68,6 @@ public class BookService {
         if (bookRepository.existsByIsbn(book.getIsbn())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ISBN 已存在");
         }
-
         book.setCreatedAt(OffsetDateTime.now());
         book.setUpdatedAt(OffsetDateTime.now());
         return bookRepository.save(book);
