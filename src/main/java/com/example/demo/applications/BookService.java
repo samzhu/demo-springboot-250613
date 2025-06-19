@@ -98,7 +98,6 @@ public class BookService {
         existingBook.setIsbn(book.getIsbn());
         existingBook.setPrice(book.getPrice());
         existingBook.setUpdatedAt(OffsetDateTime.now());
-
         return bookRepository.save(existingBook);
     }
 
