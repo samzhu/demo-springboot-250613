@@ -13,7 +13,64 @@
 
 我們會從專案的基礎設定開始，一步步介紹資料庫 JPA、版本控制 Liquibase、快取 Redis 的用法。接著，我們會把重點放在「可觀測性」，學習如何用 Micrometer 和 OpenTelemetry (OTLP) 監控應用程式的健康狀況，並將所有監控數據送到 Grafana 平台進行分析。  
 
-這份手冊適合要學習 Spring Boot 3 現代化作法的開發人員。  
+這份手冊適合要學習 Spring Boot 3 現代化作法的開發人員。
+
+## 🚀 快速開始
+
+### 啟動應用程式
+
+```bash
+# 使用本地開發環境設定啟動
+./gradlew bootRun --args='--spring.profiles.active=local-env,local'
+```
+
+### 驗證是否成功
+
+```bash
+# 檢查應用程式健康狀態
+curl http://localhost:8080/actuator/health
+
+# 測試 API - 新增一本書
+curl -X POST http://localhost:8080/books \
+  -H "Content-Type: application/json" \
+  -d '{"title":"測試書籍","author":"測試作者","isbn":"9780123456789","price":299.99}'
+```
+
+查看 Swagger UI（API 文件和測試介面）
+打開瀏覽器：http://localhost:8080/swagger-ui.html
+
+查看 Grafana 監控介面
+打開瀏覽器：http://localhost:3000
+
+### 📚 建議學習順序（初學者適用）
+
+如果你是第一次接觸這些技術，建議按照以下順序學習：
+
+1. **基礎功能** (1-2天)
+   - 先把專案跑起來，測試基本的 CRUD API
+   - 了解 Spring Boot 的自動配置魔法
+   - 熟悉 Swagger UI 的使用
+
+2. **資料處理** (2-3天)  
+   - 學習 JPA 如何操作資料庫
+   - 了解 Liquibase 如何管理資料庫版本
+   - 實作 MapStruct 物件轉換
+
+3. **效能優化** (1-2天)
+   - 體驗 Redis 快取的效果
+   - 觀察虛擬執行緒的效能提升
+
+4. **監控觀測** (3-4天)
+   - 學習使用 Grafana 查看系統狀態
+   - 理解 @Observed 註解的作用
+   - 掌握分散式追蹤的概念
+
+5. **部署實戰** (2-3天)
+   - 嘗試不同環境的配置檔案
+   - 了解 Docker 容器化部署
+   - 學習 Kubernetes 的基本概念
+
+**💡 小提醒**: 不要急著一次學完所有東西。先把基本功能跑通，再逐步深入高級特性。每個階段都要親自動手實作，這樣印象最深刻！
 
 ---
 
@@ -103,7 +160,8 @@ graph TB
 
 ### 語言/框架
 
-- Java 21, Spring Boot 3.5.0
+- **Java 21**: 最新的長期支援版本，提供虛擬執行緒等新功能
+- **Spring Boot 3.5.0**: 目前最新的企業級 Java 框架，內建監控和自動配置
 
 ### 建置與工具外掛 (Plugins)
 
@@ -173,13 +231,12 @@ Spring 在開發階段也會讀取 `config/` 資料夾下的檔案，例如 `app
 | `application-aws.yml` | Amazon Web Services | 啟用 AWS 特有服務整合 |
 
 **GCP 環境範例**：
+
 ```yaml
 # application-gcp.yml
 spring:
   config:
     import: sm@  # 啟用 Google Secret Manager
-  datasource:
-    password: ${sm@project_db_password}  # 從 Secret Manager 讀取密碼
 
 management:
   opentelemetry:
@@ -196,14 +253,12 @@ management:
 
 這些檔案**不會**被打包進 Docker Image，需要在部署時從外部掛載。這種設計遵循了 [12-Factor App Codebase](https://12factor.net/) 的原則，讓同一份程式碼可以在不同環境中運行。
 
-| 檔案 | 環境 | 說明 |
-|------|------|------|
-| `application-local.yml` | 本地開發 | 開發者電腦上的設定 |
-| `application-ut.yml` | 單元測試 | 單元測試環境 |
-| `application-sit.yml` | 系統整合測試 | SIT 測試環境 |
-| `application-uat.yml` | 使用者驗收測試 | UAT 測試環境 |
-| `application-prod.yml` | 正式環境 | 生產環境（通常不會直接存在程式碼庫中） |
-| `application-prod-example.yml` | 正式環境範本 | 生產環境的配置參考範本 |
+| 檔案 | 環境 | 說明 | 主要特色 |
+|------|------|------|----------|
+| `application-local.yml` | 本地開發 | 開發者電腦上的設定 | 詳細日誌、SQL 顯示、完整監控 |
+| `application-sit.yml` | 系統整合測試 | SIT 測試環境 | 完整追蹤、詳細日誌、所有端點開放 |
+| `application-uat.yml` | 使用者驗收測試 | UAT 測試環境 | 中等採樣、限制端點、接近生產配置 |
+| `application-prod-example.yml` | 正式環境範本 | 生產環境的配置參考 | 低採樣、安全配置、效能優化 |
 
 ### 多環境啟動範例
 
@@ -220,11 +275,14 @@ management:
 #### 測試環境
 
 ```bash
+# SIT 環境（本地或獨立伺服器）
+./gradlew bootRun --args='--spring.profiles.active=sit'
+
 # SIT 環境在 GCP 上
 ./gradlew bootRun --args='--spring.profiles.active=sit,gcp'
 
-# UAT 環境在 AWS 上
-./gradlew bootRun --args='--spring.profiles.active=uat,aws'
+# SIT 環境在 AWS 上
+./gradlew bootRun --args='--spring.profiles.active=sit,aws'
 ```
 
 #### 容器化部署
@@ -236,6 +294,24 @@ docker run -e SPRING_PROFILES_ACTIVE=sit,gcp my-app:latest
 # Kubernetes 部署（透過 ConfigMap 和 Secret）
 kubectl apply -f k8s-configs/
 ```
+
+### 🎯 配置檔案最佳實踐解析
+
+#### 版本號動態注入
+
+我們使用 `@project.version@` 從 `build.gradle` 動態載入版本號：
+
+```yaml
+spring:
+  application:
+    version: '@project.version@' # 編譯時自動替換為實際版本
+```
+
+這確保了：
+
+- ✅ 版本號與 build.gradle 保持一致
+- ✅ 避免手動更新版本號的錯誤
+- ✅ 監控系統能正確追蹤服務版本
 
 ### 配置安全性最佳實踐
 
@@ -845,9 +921,22 @@ spring:
 
 「可觀測性」是為了解決一個核心問題：當我們的程式上線運行後，要如何才能知道它內部到底發生了什麼事？這樣我們才能快速找到問題、優化效能。這套系統通常建立在三大支柱上：**指標 (Metrics)**、**追蹤 (Traces)** 和 **日誌 (Logs)**。
 
-- **日誌 (Logs)**：記錄了系統中發生的一個個獨立事件。它回答的是「**發生了什麼？**」這個問題。
-- **指標 (Metrics)**：是在一段時間內，對數據進行統計聚合的數值。它回答的是「**系統表現如何？**」這個問題，例如每秒請求數、錯誤率、反應時間等。
-- **追蹤 (Traces)**：描繪了一個請求，從進入系統開始，到經過各個不同服務，最後回傳結果的完整旅程。它回答的是「**請求去了哪裡？**」以及「**為什麼這麼慢？**」這類問題。
+這就是「可觀測性三大支柱」的概念：
+
+- **📊 指標 (Metrics)**：是在一段時間內，對數據進行統計聚合的數值
+  - 每秒有多少人訪問我的 API？
+  - 平均回應時間是多少？
+  - 錯誤率有多高？
+  
+- **🔍 追蹤 (Traces)**：描繪了一個請求，從進入系統開始，到經過各個不同服務，最後回傳結果的完整旅程
+  - 一個 API 請求經過了哪些步驟？
+  - 每個步驟花了多少時間？
+  - 哪個步驟最慢？
+  
+- **📝 日誌 (Logs)**：記錄了系統中發生的一個個獨立事件
+  - 某個時間點發生了什麼事？
+  - 錯誤的詳細訊息是什麼？
+  - 使用者做了什麼操作？
 
 ### Spring 的現代觀測哲學
 
@@ -1558,10 +1647,30 @@ getBooksButton.addEventListener('click', () => {
 
 ## 監控
 
+```bash
+curl -X GET http://localhost:8080/actuator/health
+```
+
+```json
+{
+    "status": "UP",
+    "groups": [
+        "liveness",
+        "readiness"
+    ]
+}
+```
+
 就緒探針 (readiness probe)
 
 ```bash
 curl -X GET http://localhost:8080/actuator/health/readiness
+```
+
+```json
+{
+    "status": "UP"
+}
 ```
 
 存活探針 (liveness probe)
@@ -1570,11 +1679,170 @@ curl -X GET http://localhost:8080/actuator/health/readiness
 curl -X GET http://localhost:8080/actuator/health/liveness
 ```
 
+```json
+{
+    "status": "UP"
+}
+```
+
 SBOM 資訊
 
 ```bash
 curl -X GET http://localhost:8080/actuator/sbom/application
 ```
+
+```json
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.6",
+    "serialNumber": "urn:uuid:9993dfa5-8a64-4d53-a404-c1a56a0be1cb",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2025-06-17T06:58:29Z",
+        "tools": {
+            "components": [
+                {
+                    "type": "application",
+                    "author": "CycloneDX",
+                    "name": "cyclonedx-gradle-plugin",
+                    "version": "2.3.0"
+                }
+            ],
+            "services": []
+        },
+        "component": {
+            "type": "application",
+            "bom-ref": "pkg:maven/com.example/demo@0.0.1?project_path=%3A",
+            "group": "com.example",
+            "name": "demo",
+            "version": "0.0.1",
+            "purl": "pkg:maven/com.example/demo@0.0.1?project_path=%3A",
+            "modified": false,
+            "externalReferences": []
+        },
+        "licenses": []
+    },
+    "components": [
+        {
+            "type": "library",
+            "bom-ref": "pkg:maven/org.springframework.boot/spring-boot@3.5.0?type=jar",
+            "publisher": "VMware, Inc.",
+            "group": "org.springframework.boot",
+            "name": "spring-boot",
+            "version": "3.5.0",
+            "description": "Spring Boot",
+            "hashes": [
+                {
+                    "alg": "MD5",
+                    "content": "bda13182d51c044ec0ce7c4c62a2cc68"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:maven/org.springframework.boot/spring-boot@3.5.0?type=jar",
+            "modified": false,
+            "externalReferences": [
+                {
+                    "type": "website",
+                    "url": "https://spring.io"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:maven:package:test",
+                    "value": "false"
+                }
+            ]
+        },
+        {
+            "type": "library",
+            "bom-ref": "pkg:maven/org.springframework.data/spring-data-commons@3.5.0?type=jar",
+            "group": "org.springframework.data",
+            "name": "spring-data-commons",
+            "version": "3.5.0",
+            "description": "Core Spring concepts underpinning every Spring Data module.",
+            "hashes": [
+                {
+                    "alg": "MD5",
+                    "content": "a753695738fbd37e798a738072592550"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:maven/org.springframework.data/spring-data-commons@3.5.0?type=jar",
+            "modified": false,
+            "externalReferences": [
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/spring-projects/spring-data-commons/issues"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:maven:package:test",
+                    "value": "false"
+                }
+            ]
+        }
+    ]
+}
+```
+
+Git 資訊
+
+```bash
+curl -X GET http://localhost:8080/actuator/info
+```
+
+```json
+{
+    "git": {
+        "branch": "main",
+        "commit": {
+            "id": "66fb93d",
+            "time": "2025-06-19T02:27:31Z"
+        }
+    }
+}
+```
+
+### VS Code 套件參考
+
+- [vscjava.vscode-java-pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
+- [vmware.vscode-boot-dev-pack](https://marketplace.visualstudio.com/items?itemName=vmware.vscode-boot-dev-pack)
+- Docker
+
+## 📋 最佳實踐清單
+
+### 開發階段
+
+- [ ] 每次修改 `openapi.yaml` 後執行 `./gradlew clean openApiGenerate`
+- [ ] 新增快取時記得設定合適的 TTL
+- [ ] 為重要的業務邏輯加上 `@Observed` 註解
+
+### 部署階段
+
+- [ ] 不同環境使用不同的配置檔案
+- [ ] 敏感資訊使用環境變數或 Secret Manager
+- [ ] 設定合適的追蹤採樣率（正式環境建議 0.1）
+
+## 📚 延伸學習資源
+
+### 官方文件
+
+- [Spring Boot 官方文件](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
+- [OpenTelemetry 文件](https://opentelemetry.io/docs/)
+- [Grafana 文件](https://grafana.com/docs/)
 
 ## 總結
 
@@ -1582,10 +1850,16 @@ curl -X GET http://localhost:8080/actuator/sbom/application
 
 對於開發者而言，從「把功能做完」進化到「把品質做好」，關鍵在於有意識地去採用這些現代化的作法：
 
-- 擁抱 Java 21 虛擬執行緒，用更簡單的程式碼，換取更高的系統吞吐量。
-- 透過 Liquibase 進行資料庫版本控制，確保團隊協作和多環境部署的一致性。
-- 實踐 API-First 開發流程，建立清晰的服務契約，加速團隊的平行開發效率。
-- 利用 MapStruct 和 Spring Cache 等工具，消除重複的樣板程式碼，並有效提升應用效能。
-- 建立全面的可觀測性體系，透過 Micrometer 和 OpenTelemetry 深入了解系統內部行為，將被動的「除錯」，轉變為主動的「效能優化」與「問題預防」。
+- 擁抱 Java 21 虛擬執行緒，用更簡單的程式碼，換取更高的系統吞吐量
+- 透過 Liquibase 進行資料庫版本控制，確保團隊協作和多環境部署的一致性
+- 實踐 API-First 開發流程，建立清晰的服務契約，加速團隊的平行開發效率
+- 利用 MapStruct 和 Spring Cache 等工具，消除重複的樣板程式碼，並有效提升應用效能
+- 建立全面的可觀測性體系，透過 Micrometer 和 OpenTelemetry 深入了解系統內部行為，將被動的「除錯」，轉變為主動的「效能優化」與「問題預防」
+
+**記住：好的程式不只是能跑，更要跑得穩、跑得快、出問題時能快速定位！**
 
 將這些實踐融入到日常開發中，有助於提升最終產品的品質與開發團隊的生產力。希望這份手冊能為你在打造下一個專案時，提供有用的參考。
+
+---
+
+*如果這份手冊對你有幫助，歡迎分享給其他開發者。有問題或建議，也歡迎提出 Issue 或 Pull Request！* 🙌

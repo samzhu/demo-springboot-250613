@@ -98,6 +98,11 @@ tasks.withType(JavaCompile) {
     ]
 }
 
+// 啟用資源檔案中的變數替換，支援 @project.version@ 等佔位符
+tasks.named('processResources') {
+    expand(project.properties)
+}
+
 // 配置 git-properties plugin，即使沒有 Git 目錄也不會編譯失敗
 tasks.named('generateGitProperties') {
     gitProperties {

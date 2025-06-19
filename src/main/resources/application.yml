@@ -1,28 +1,46 @@
+# Spring Boot 應用程式核心配置
 spring:
-  main:
-    cloud-platform: kubernetes
-    banner-mode: off
   application:
-    name: demo
+    name: demo # 應用程式名稱，用於服務識別和監控
+    version: '@project.version@' # 應用程式版本號，從 build.gradle 動態載入
+  main:
+    cloud-platform: kubernetes # 指定雲端平台為 Kubernetes，啟用相關自動配置
+    banner-mode: off # 停用 Spring Boot 啟動橫幅
   threads:
     virtual:
-      enabled: true
+      enabled: true # 啟用虛擬執行緒 (Java 21+)，提升並發處理效能
+  mvc:
+    problemdetails:
+      enabled: true # 啟用 RFC 9457 問題詳情支援，統一 REST API 錯誤回應格式
+  datasource:
+    url: ${db.url} # 資料庫連線 URL，從環境變數載入
+    username: ${db.username} # 資料庫使用者名稱
+    password: ${db.password} # 資料庫密碼
+  data:
+    redis:
+      host: ${redis.host} # Redis 伺服器主機位址
 
+# SpringDoc OpenAPI 文件配置
+springdoc:
+  api-docs:
+    enabled: false # 停用 springdoc-openapi 端點，正式環境建議關閉
+
+# Spring Boot Actuator 管理與監控配置
 management:
   observations:
     annotations:
       enabled: true # 啟用基於註解的觀測 (@Observed)
   opentelemetry:    # OpenTelemetry 資源屬性，將附加到所有遙測訊號
     resource-attributes:
-      service.version: "1.0.0"
-      deployment.environment: "production" # 預設為正式環境
-  # Tracing 相關配置
+      service.version: ${spring.application.version} # 服務版本資訊
+      execution.environment: "production" # 執行環境標識，預設為正式環境
+  # 分散式追蹤 (Distributed Tracing) 相關配置
   tracing:
     sampling:
-      # 正式環境建議較低的採樣率以降低效能影響
-      probability: 0.1
+      # 追蹤採樣機率，正式環境建議較低的採樣率以降低效能影響
+      probability: 0.1 # 10% 採樣率
     baggage:
-      enabled: true  # 啟用 Baggage 功能
+      enabled: true  # 啟用 Baggage 功能，用於跨服務傳遞業務上下文
       remote-fields: # 聲明需要跨服務傳播的業務欄位
         - book-id
       tag-fields:    # 為 Baggage 自動添加為本地 Span 的標籤 (tag)
@@ -33,44 +51,45 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,metrics,prometheus" # 正式環境只開放必要端點
+        include: "health,info,metrics,prometheus,sbom" # 正式環境只開放必要的監控端點
   info:
     git:
-      enabled: true
-      mode: simple
+      mode: simple # Git 資訊顯示模式，simple 模式顯示基本資訊
   endpoint:
     sbom:
-      access: read-only
+      access: read-only # 軟體物料清單端點設為唯讀
     health:
-      probes: # enable liveness and readiness probes
-        enabled: true
+      probes: # 健康檢查探針配置
+        enabled: true # 啟用 liveness 和 readiness 探針 (適用於 Kubernetes)
+  # OpenTelemetry Protocol (OTLP) 匯出配置
   otlp:
     metrics:
       export:
-        enabled: true
-        url: http://localhost:4318/v1/metrics
+        enabled: true # 啟用指標匯出
+        url: ${otlp.metrics.endpoint:http://localhost:4318/v1/metrics} # 指標收集端點
     tracing:
       export:
-        enabled: true
-      endpoint: http://localhost:4318/v1/traces
+        enabled: true # 啟用追蹤匯出
+      endpoint: ${otlp.traces.endpoint:http://localhost:4318/v1/traces} # 追蹤資料收集端點
     logging:
       export:
-        enabled: true
-      endpoint: http://localhost:4318/v1/logs
+        enabled: true # 啟用日誌匯出
+      endpoint: ${otlp.logs.endpoint:http://localhost:4318/v1/logs} # 日誌收集端點
       
+# 伺服器相關配置
 server:
-  shutdown: graceful
+  shutdown: graceful # 啟用優雅關機，確保請求完整處理
   error:
-    include-message: never
-    include-binding-errors: never
+    include-message: never # 錯誤回應中不包含訊息內容，提升安全性
+    include-binding-errors: never # 錯誤回應中不包含綁定錯誤詳情
 
+# 日誌配置
 logging:
   structured:
     format:
-      file: logstash
+      file: logstash # 使用 Logstash JSON 格式，便於日誌收集和分析
   level:
-    root: info # 正式環境使用 info 等級
-    com.example.demo: info
-
+    root: info # 根日誌等級設為 info，正式環境建議使用
+    com.example.demo: info # 應用程式套件的日誌等級
 
 

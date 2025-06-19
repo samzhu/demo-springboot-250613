@@ -1,0 +1,13 @@
+# 正式環境設定範例
+# 這個檔案用於示範如何配置正式環境的設定
+# 實際使用時，請將這個檔案複製到 application-prod.yml 並修改相關設定
+# 注意：這個檔案中的密碼是示範用，實際使用時請使用 Secret Manager 或其他安全機制
+
+# 資料庫連線設定
+db.url: jdbc:postgresql://localhost:5432/mydatabase
+db.username: myuser
+db.password: ${sm@project_db_password} # 從 Secret Manager 讀取密碼
+
+# Redis 設定
+redis.host: localhost
+
