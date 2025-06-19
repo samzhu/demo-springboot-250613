@@ -67,8 +67,7 @@ curl -X POST http://localhost:8080/books \
 
 5. **部署實戰** (2-3天)
    - 嘗試不同環境的配置檔案
-   - 了解 Docker 容器化部署
-   - 學習 Kubernetes 的基本概念
+   - 了解容器化部署
 
 **💡 小提醒**: 不要急著一次學完所有東西。先把基本功能跑通，再逐步深入高級特性。每個階段都要親自動手實作，這樣印象最深刻！
 
@@ -239,9 +238,6 @@ spring:
     import: sm@  # 啟用 Google Secret Manager
 
 management:
-  opentelemetry:
-    resource-attributes:
-      cloud.provider: "gcp"
   endpoint:
     health:
       group:
@@ -267,9 +263,6 @@ management:
 ```bash
 # 純本地環境
 ./gradlew bootRun --args='--spring.profiles.active=local'
-
-# 本地環境 + 模擬 GCP 服務
-./gradlew bootRun --args='--spring.profiles.active=local,gcp'
 ```
 
 #### 測試環境
@@ -283,16 +276,6 @@ management:
 
 # SIT 環境在 AWS 上
 ./gradlew bootRun --args='--spring.profiles.active=sit,aws'
-```
-
-#### 容器化部署
-
-```bash
-# Docker 容器啟動（透過環境變數）
-docker run -e SPRING_PROFILES_ACTIVE=sit,gcp my-app:latest
-
-# Kubernetes 部署（透過 ConfigMap 和 Secret）
-kubectl apply -f k8s-configs/
 ```
 
 ### 🎯 配置檔案最佳實踐解析
@@ -324,30 +307,14 @@ spring:
    ```yaml
    spring:
      datasource:
-       password: ${DB_PASSWORD}
+       password: ${db.password}
    ```
 
 2. **雲端 Secret Manager**：
 
    ```yaml
    # GCP
-   spring:
-     datasource:
-       password: ${sm@project_db_password}
-   
-   # AWS
-   spring:
-     datasource:
-       password: ${ssm@/myapp/db/password}
-   ```
-
-3. **Kubernetes Secret**：
-
-   ```yaml
-   # 透過 volumeMounts 掛載
-   spring:
-     datasource:
-       password: ${file@/etc/secrets/db-password}
+   db.password: ${sm@project_db_password}
    ```
 
 #### 📊 環境特定調優
@@ -370,7 +337,14 @@ management:
 
 ### VSCode 開發環境設定
 
-建議建立 `.vscode/launch.json` 來簡化開發流程：
+建議建立 `.vscode/launch.json` 來簡化開發流程。這個檔案可以讓你直接在 VSCode 中啟動和除錯 Spring Boot 應用程式，而不需要每次都在終端機輸入長長的指令。
+
+#### 透過 VSCode 指令面板建立 (推薦)
+
+1. **開啟指令面板**：使用快捷鍵 `Ctrl+Shift+P` (Windows/Linux) 或 `Cmd+Shift+P` (macOS)
+2. **搜尋指令**：輸入 `Java: Run and Debug` 並選擇
+3. **選擇主類別**：VSCode 會掃描專案，選擇 `com.example.demo.DemoApplication`
+4. **自動產生設定**：這時會自動在專案根目錄建立 `.vscode/launch.json` 檔案
 
 ```json
 {
@@ -378,22 +352,12 @@ management:
     "configurations": [
         {
             "type": "java",
-            "name": "本地開發環境",
+            "name": "DemoApplication",
             "request": "launch",
             "mainClass": "com.example.demo.DemoApplication",
             "projectName": "demo-springboot-250613",
             "env": {
-                "spring.profiles.active": "local"
-            }
-        },
-        {
-            "type": "java",
-            "name": "本地 + GCP 模擬",
-            "request": "launch",
-            "mainClass": "com.example.demo.DemoApplication",
-            "projectName": "demo-springboot-250613",
-            "env": {
-                "spring.profiles.active": "local,gcp"
+                "spring.profiles.active": "local-env,local"
             }
         }
     ]
