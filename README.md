@@ -1556,6 +1556,26 @@ getBooksButton.addEventListener('click', () => {
 
 ---
 
+## 監控
+
+就緒探針 (readiness probe)
+
+```bash
+curl -X GET http://localhost:8080/actuator/health/readiness
+```
+
+存活探針 (liveness probe)
+
+```bash
+curl -X GET http://localhost:8080/actuator/health/liveness
+```
+
+SBOM 資訊
+
+```bash
+curl -X GET http://localhost:8080/actuator/sbom/application
+```
+
 ## 總結
 
 這份手冊展示了如何整合一系列現代化的工具與實踐，來打造一個不只功能完整，同時也兼顧效能、可維護性和可觀測性的 Spring Boot 專案。

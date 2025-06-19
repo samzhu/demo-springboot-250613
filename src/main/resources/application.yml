@@ -1,4 +1,7 @@
 spring:
+  main:
+    cloud-platform: kubernetes
+    banner-mode: off
   application:
     name: demo
   threads:
@@ -31,12 +34,21 @@ management:
     web:
       exposure:
         include: "health,info,metrics,prometheus" # 正式環境只開放必要端點
+  info:
+    git:
+      enabled: true
+      mode: simple
+  endpoint:
+    sbom:
+      access: read-only
+    health:
+      probes: # enable liveness and readiness probes
+        enabled: true
   otlp:
     metrics:
       export:
         enabled: true
         url: http://localhost:4318/v1/metrics
-        step: 10s # 預設匯出間隔是 1 分鐘，可以縮短以便測試
     tracing:
       export:
         enabled: true
@@ -49,7 +61,7 @@ management:
 server:
   shutdown: graceful
   error:
-    include-message: never # 正式環境不暴露詳細錯誤訊息
+    include-message: never
     include-binding-errors: never
 
 logging:
