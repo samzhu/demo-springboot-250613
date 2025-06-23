@@ -149,40 +149,43 @@ graph TB
 
 ```text
 .
-├── build.gradle                # Gradle 建置腳本，定義專案需要哪些工具和套件
-├── config/                     # 存放不同環境的設定檔，這些檔案不會被打包到最終的程式裡
-│   ├── application-local.yml   # "local" 環境 (自己電腦) 專用的設定檔
-│   ├── application-ut.yml      # "ut" 環境 (單元測試) 專用的設定檔
-│   ├── application-sit.yml     # "sit" 環境 (整合測試) 專用的設定檔
-│   └── application-prod-example.yml # "prod" 環境 (正式上線) 的設定檔範本 (重要密碼會存在別的地方)
-├── compose.yaml                # Docker 設定檔，按一個鍵就能在本機架起所有需要的服務 (資料庫、Redis等)
+├── build.gradle                                         # Gradle 建置腳本，定義專案需要哪些工具和套件
+├── build/generated/openapi/
+│   └── src/main/java/com/example/demo/
+│       └── interfaces/                                  # 介面層: 所有跟外部系統互動的程式碼都放這裡
+│           ├── api/                                     # - (自動產生) 根據 openapi.yaml 產生的 API 介面
+│           └── dto/                                     # - (自動產生) 根據 openapi.yaml 產生的資料傳輸物件
+├── config/                                              # 存放不同環境的設定檔，這些檔案不會被打包到最終的程式裡
+│   ├── application-local.yml                            # "local" 環境 (自己電腦) 專用的設定檔
+│   ├── application-ut.yml                               # "ut" 環境 (單元測試) 專用的設定檔
+│   ├── application-sit.yml                              # "sit" 環境 (整合測試) 專用的設定檔
+│   └── application-prod-example.yml                     # "prod" 環境 (正式上線) 的設定檔範本 (重要密碼會存在別的地方)
+├── compose.yaml                                         # Docker 設定檔，按一個鍵就能在本機架起所有需要的服務 (資料庫、Redis等)
 ├── dev-resources/
-│   └── openapi.yaml            # API 規格檔案 (所有 API 設計的唯一標準)
+│   └── openapi.yaml                                     # API 規格檔案 (所有 API 設計的唯一標準)
 └── src/
     ├── main/
     │   ├── java/com/example/demo/
-    │   │   ├── applications/        # 應用層 (Service): 存放核心商業邏輯的地方
-    │   │   ├── config/              # 設定層: 存放 Spring 需要的各種設定
-    │   │   ├── infrastructure/      # 基礎設施層: 定義如何跟資料庫溝通的介面
-    │   │   ├── interfaces/          # 介面層: 所有跟外部系統互動的程式碼都放這裡
-    │   │   │   ├── api/             # - (自動產生) 根據 openapi.yaml 產生的 API 介面
-    │   │   │   ├── dto/             # - (自動產生) 根據 openapi.yaml 產生的資料傳輸物件
-    │   │   │   ├── mapper/          # - DTO 和資料庫 Entity 之間的轉換工具
-    │   │   │   └── rest/            # - API 的具體實作程式碼 (Controller)
-    │   │   ├── models/              # 模型層: 定義資料庫表格長相的程式碼 (JPA Entity)
-    │   │   └── DemoApplication.java # Spring Boot 專案的啟動入口
+    │   │   ├── applications/                            # 應用層 (Service): 存放核心商業邏輯的地方
+    │   │   ├── config/                                  # 設定層: 存放 Spring 需要的各種設定
+    │   │   ├── infrastructure/                          # 基礎設施層: 定義如何跟資料庫溝通的介面
+    │   │   ├── interfaces/                              # 介面層: 所有跟外部系統互動的程式碼都放這裡
+    │   │   │   ├── mapper/                              # - DTO 和資料庫 Entity 之間的轉換工具
+    │   │   │   └── rest/                                # - API 的具體實作程式碼 (Controller)
+    │   │   ├── models/                                  # 模型層: 定義資料庫表格長相的程式碼 (JPA Entity)
+    │   │   └── DemoApplication.java                     # Spring Boot 專案的啟動入口
     │   └── resources/
-    │       ├── application.yml      # 最基礎、通用的 Spring Boot 設定檔
-    │       ├── application-gcp.yml  # 給 Google Cloud Platform (GCP) 環境用的設定檔
-    │       ├── application-aws.yml  # 給 Amazon Web Services (AWS) 環境用的設定檔
-    │       └── db/changelog/        # Liquibase 資料庫變更腳本
-    │           ├── db.changelog-master.yaml # 主要的變更紀錄檔
-    │           └── history/         # 存放所有歷史變更紀錄
-    └── test/                        # 測試程式碼
+    │       ├── application.yml                          # 最基礎、通用的 Spring Boot 設定檔
+    │       ├── application-gcp.yml                      # 給 Google Cloud Platform (GCP) 環境用的設定檔
+    │       ├── application-aws.yml                      # 給 Amazon Web Services (AWS) 環境用的設定檔
+    │       └── db/changelog/                            # Liquibase 資料庫變更腳本
+    │           ├── db.changelog-master.yaml             # 主要的變更紀錄檔
+    │           └── history/                             # 存放所有歷史變更紀錄
+    └── test/                                            # 測試程式碼
         └── java/com/example/demo/
             ├── TestDemoApplication.java
-            ├── TestcontainersConfiguration.java # Testcontainers (一種測試工具) 的設定
-            └── DemoApplicationTests.java        # 整合測試
+            ├── TestcontainersConfiguration.java         # Testcontainers (一種測試工具) 的設定
+            └── DemoApplicationTests.java                # 整合測試
 ```
 
 ---
