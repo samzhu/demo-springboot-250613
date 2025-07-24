@@ -5,49 +5,49 @@
     src="https://cdn.firebasestudio.dev/btn/try_bright_32.svg">
 </a>
 
-# Spring Boot 3 現代化專案實戰手冊
+# Spring Boot 3 Modern Project Guide
 
-## 專案簡介
+## Project Overview
 
-這份手冊將帶你了解一個使用 Java 21、Spring Boot 3 和 Gradle 建構的專案。我們的目標不只是寫出能動的程式，更要確保專案夠強壯、跑得快，而且未來容易維護。  
+This guide will walk you through a project built with Java 21, Spring Boot 3, and Gradle. Our goal isn't just to write working code - we want to make sure the project is robust, fast, and easy to maintain in the future.
 
-我們會從專案的基礎設定開始，一步步介紹資料庫 JPA、版本控制 Liquibase、快取 Redis 的用法。接著，我們會把重點放在「可觀測性」，學習如何用 Micrometer 和 OpenTelemetry (OTLP) 監控應用程式的健康狀況，並將所有監控數據送到 Grafana 平台進行分析。  
+We'll start with basic setup, then explore database JPA, version control with Liquibase, and Redis caching. After that, we'll focus on "observability" - learning how to monitor your app's health using Micrometer and OpenTelemetry (OTLP), and send all monitoring data to Grafana for analysis.
 
-這份手冊適合要學習 Spring Boot 3 現代化作法的開發人員。
+This guide is perfect for developers who want to learn modern Spring Boot 3 practices.
 
-## 🚀 快速開始
+## 🚀 Quick Start
 
-### 啟動應用程式
+### Start the Application
 
 ```bash
-# 使用本地開發環境設定啟動
+# Start with local development settings
 ./gradlew bootRun --args='--spring.profiles.active=local-env,local'
 ```
 
-### 驗證是否成功
+### Verify Everything Works
 
 ```bash
-# 檢查應用程式健康狀態
+# Check application health
 curl http://localhost:8080/actuator/health
 
-# 測試 API - 新增一本書
+# Test API - Add a book
 curl --location 'http://localhost:8080/books' \
 --header 'Content-Type: application/json' \
 --data '{
-    "title": "測試書籍",
-    "author": "測試作者",
+    "title": "Test Book",
+    "author": "Test Author",
     "isbn": "9780123456789",
     "price": 299.99
 }'
 ```
 
-正確結果:
+Success response:
 
 ```json
 {
     "id": 1,
-    "title": "測試書籍",
-    "author": "測試作者",
+    "title": "Test Book",
+    "author": "Test Author",
     "isbn": "9780123456789",
     "publishYear": null,
     "price": 299.99,
@@ -56,64 +56,64 @@ curl --location 'http://localhost:8080/books' \
 }
 ```
 
-新增書籍失敗結果:
+Failed response (duplicate book):
 
 ```json
 {
     "type": "about:blank",
     "title": "Bad Request",
     "status": 400,
-    "detail": "ISBN 已存在",
+    "detail": "ISBN already exists",
     "instance": "/books"
 }
 ```
 
-錯誤訊息採用 RFC 9457 規格，詳細說明請參考 [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html)。
+Error messages follow RFC 9457 format. See [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html) for details.
 
-查看 Swagger UI（API 文件和測試介面）
-打開瀏覽器：http://localhost:8080/swagger-ui.html
+View Swagger UI (API docs and test interface)
+Open browser: http://localhost:8080/swagger-ui.html
 
-查看 Grafana 監控介面
-打開瀏覽器：http://localhost:3000
+View Grafana monitoring
+Open browser: http://localhost:3000
 
-### 📚 建議學習順序（初學者適用）
+### 📚 Suggested Learning Path (for beginners)
 
-如果你是第一次接觸這些技術，建議按照以下順序學習：
+If you're new to these technologies, follow this order:
 
-1. **基礎功能** (1-2天)
-   - 先把專案跑起來，測試基本的 CRUD API
-   - 了解 Spring Boot 的自動配置魔法
-   - 熟悉 Swagger UI 的使用
+1. **Basic Features** (1-2 days)
+   - Get the project running and test basic CRUD APIs
+   - Understand Spring Boot's auto-configuration magic
+   - Get familiar with Swagger UI
 
-2. **資料處理** (2-3天)  
-   - 學習 JPA 如何操作資料庫
-   - 了解 Liquibase 如何管理資料庫版本
-   - 實作 MapStruct 物件轉換
+2. **Data Processing** (2-3 days)  
+   - Learn how JPA works with databases
+   - Understand how Liquibase manages database versions
+   - Implement MapStruct object mapping
 
-3. **效能優化** (1-2天)
-   - 體驗 Redis 快取的效果
-   - 觀察虛擬執行緒的效能提升
+3. **Performance Optimization** (1-2 days)
+   - Experience Redis caching benefits
+   - See virtual thread performance improvements
 
-4. **監控觀測** (3-4天)
-   - 學習使用 Grafana 查看系統狀態
-   - 理解 @Observed 註解的作用
-   - 掌握分散式追蹤的概念
+4. **Monitoring & Observability** (3-4 days)
+   - Learn to use Grafana to check system status
+   - Understand what @Observed annotation does
+   - Master distributed tracing concepts
 
-5. **部署實戰** (2-3天)
-   - 嘗試不同環境的配置檔案
-   - 了解容器化部署
+5. **Deployment Practice** (2-3 days)
+   - Try different environment configurations
+   - Understand containerized deployment
 
-**💡 小提醒**: 不要急著一次學完所有東西。先把基本功能跑通，再逐步深入高級特性。每個階段都要親自動手實作，這樣印象最深刻！
+**💡 Tip**: Don't rush to learn everything at once. Get the basics working first, then gradually dive into advanced features. Hands-on practice at each stage gives the best learning experience!
 
 ---
 
-## 軟體分層架構
+## Software Architecture
 
-專案的運作方式，可以用下面這張圖來理解：
+Here's how the project works:
 
 ```mermaid
 graph TB
-    subgraph "書本管理系統"
+    subgraph "Book Management System"
         WebController
         AppService
         DomainModel
@@ -121,7 +121,7 @@ graph TB
         Cache
     end
 
-    User["用戶"] --> WebController
+    User["User"] --> WebController
     WebController --> AppService
     AppService --> DomainModel
     AppService --> Repository
@@ -136,210 +136,210 @@ graph TB
     class User,PostgreSQL,Redis external
 ```
 
-- **WebController**: 接收使用者操作，例如點擊網頁按鈕。
-- **AppService**: 處理主要的業務邏輯，是整個系統的核心。
-- **Repository / CacheService**: 負責跟資料庫 (PostgreSQL) 和快取 (Redis) 打交道，存取資料。
-- **DomainModel**: 定義了系統中的物件，例如一本書該有哪些屬性。
+- **WebController**: Receives user actions, like button clicks
+- **AppService**: Handles main business logic, the system's core
+- **Repository / CacheService**: Talks to database (PostgreSQL) and cache (Redis), handles data storage
+- **DomainModel**: Defines system objects, like what properties a book should have
 
 ---
 
-## 📁 專案結構概覽
+## 📁 Project Structure Overview
 
-這個專案採用了常見的分層架構。把不同功能的程式碼放在不同的資料夾，就像把衣服、褲子、襪子分類放好一樣，未來要找東西或修改會方便很多。
+This project uses a common layered architecture. Different types of code go in different folders - like organizing clothes, pants, and socks separately. This makes finding and changing things much easier later.
 
 ```text
 .
-├── build.gradle                                         # Gradle 建置腳本，定義專案需要哪些工具和套件
-├── build/generated/openapi/                             # build 資料夾為編譯時自動建立跟產生相關檔案, 無需手動建立跟管理
+├── build.gradle                                         # Gradle build script, defines tools and packages needed
+├── build/generated/openapi/                             # Auto-generated during compile time, no manual management needed
 │   └── src/main/java/com/example/demo/
-│       └── interfaces/                                  # 介面層: 所有跟外部系統互動的程式碼都放這裡
-│           ├── api/                                     # - (自動產生) 根據 openapi.yaml 產生的 API 介面
-│           └── dto/                                     # - (自動產生) 根據 openapi.yaml 產生的資料傳輸物件
-├── config/                                              # 存放不同環境的設定檔，這些檔案不會被打包到最終的程式裡
-│   ├── application-local.yml                            # "local" 環境 (自己電腦) 專用的設定檔
-│   ├── application-ut.yml                               # "ut" 環境 (單元測試) 專用的設定檔
-│   ├── application-sit.yml                              # "sit" 環境 (整合測試) 專用的設定檔
-│   └── application-prod-example.yml                     # "prod" 環境 (正式上線) 的設定檔範本 (重要密碼會存在別的地方)
-├── compose.yaml                                         # Docker 設定檔，按一個鍵就能在本機架起所有需要的服務 (資料庫、Redis等)
+│       └── interfaces/                                  # Interface layer: All external system interaction code
+│           ├── api/                                     # - (Auto-generated) API interfaces from openapi.yaml
+│           └── dto/                                     # - (Auto-generated) Data transfer objects from openapi.yaml
+├── config/                                              # Environment-specific config files, not packaged into final app
+│   ├── application-local.yml                            # Settings for "local" environment (your computer)
+│   ├── application-ut.yml                               # Settings for "ut" environment (unit tests)
+│   ├── application-sit.yml                              # Settings for "sit" environment (integration tests)
+│   └── application-prod-example.yml                     # Template for "prod" environment (passwords stored elsewhere)
+├── compose.yaml                                         # Docker config - one click to set up all services locally
 ├── dev-resources/
-│   └── openapi.yaml                                     # API 規格檔案 (所有 API 設計的唯一標準)
+│   └── openapi.yaml                                     # API specification file (single source of truth for all APIs)
 └── src/
     ├── main/
     │   ├── java/com/example/demo/
-    │   │   ├── applications/                            # 應用層 (Service): 存放核心商業邏輯的地方
-    │   │   ├── config/                                  # 設定層: 存放 Spring 需要的各種設定
-    │   │   ├── infrastructure/                          # 基礎設施層: 定義如何跟資料庫溝通的介面
-    │   │   ├── interfaces/                              # 介面層: 所有跟外部系統互動的程式碼都放這裡
-    │   │   │   ├── mapper/                              # - DTO 和資料庫 Entity 之間的轉換工具
-    │   │   │   └── rest/                                # - API 的具體實作程式碼 (Controller)
-    │   │   ├── models/                                  # 模型層: 定義資料庫表格長相的程式碼 (JPA Entity)
-    │   │   └── DemoApplication.java                     # Spring Boot 專案的啟動入口
+    │   │   ├── applications/                            # Application layer (Service): Core business logic
+    │   │   ├── config/                                  # Configuration layer: Various Spring configs
+    │   │   ├── infrastructure/                          # Infrastructure layer: Database communication interfaces
+    │   │   ├── interfaces/                              # Interface layer: All external system interaction code
+    │   │   │   ├── mapper/                              # - Tools for converting between DTOs and database entities
+    │   │   │   └── rest/                                # - API implementation code (Controllers)
+    │   │   ├── models/                                  # Model layer: Database table definitions (JPA Entities)
+    │   │   └── DemoApplication.java                     # Spring Boot application entry point
     │   └── resources/
-    │       ├── application.yml                          # 最基礎、通用的 Spring Boot 設定檔
-    │       ├── application-gcp.yml                      # 給 Google Cloud Platform (GCP) 環境用的設定檔
-    │       ├── application-aws.yml                      # 給 Amazon Web Services (AWS) 環境用的設定檔
-    │       └── db/changelog/                            # Liquibase 資料庫變更腳本
-    │           ├── db.changelog-master.yaml             # 主要的變更紀錄檔
-    │           └── history/                             # 存放所有歷史變更紀錄
-    └── test/                                            # 測試程式碼
+    │       ├── application.yml                          # Basic, shared Spring Boot config
+    │       ├── application-gcp.yml                      # Config for Google Cloud Platform (GCP)
+    │       ├── application-aws.yml                      # Config for Amazon Web Services (AWS)
+    │       └── db/changelog/                            # Liquibase database change scripts
+    │           ├── db.changelog-master.yaml             # Main changelog file
+    │           └── history/                             # All historical change records
+    └── test/                                            # Test code
         └── java/com/example/demo/
             ├── TestDemoApplication.java
-            ├── TestcontainersConfiguration.java         # Testcontainers (一種測試工具) 的設定
-            └── DemoApplicationTests.java                # 整合測試
+            ├── TestcontainersConfiguration.java         # Testcontainers config
+            └── DemoApplicationTests.java                # Integration tests
 ```
 
 ---
 
-## 🧩 核心技術與關鍵套件一覽
+## 🧩 Core Technologies & Key Dependencies
 
-這個專案使用了一系列在業界廣泛應用的技術來打造。
+This project is built with a set of widely-used industry technologies.
 
-### 語言/框架
+### Languages/Frameworks
 
-- **Java 21**: 最新的長期支援版本，提供虛擬執行緒等新功能
-- **Spring Boot 3.5.x**: 目前最新的企業級 Java 框架，內建監控和自動配置
+- **Java 21**: Latest long-term support version with new features like virtual threads
+- **Spring Boot 3.5.x**: Latest enterprise Java framework with built-in monitoring and auto-configuration
 
-### 建置與工具外掛 (Plugins)
+### Build Tools & Plugins
 
-這些是幫助我們建置和管理專案的工具。
+These tools help us build and manage the project.
 
-- **`org.springframework.boot`** Spring Boot 的核心工具。它讓我們能輕鬆啟動專案，並將整個專案打包成一個可以獨立運行的檔案。
-- **`io.spring.dependency-management`** Spring 的依賴管理工具。它幫我們統一管理專案中用到的各種套件版本，我們就不需要手動指定每個套件的版本號了。
-- **`org.openapi.generator`** 實踐「API First」的核心工具。它會讀取 `openapi.yaml` 這個規格檔，自動幫我們產生 API 的 Java 介面和資料模型(DTO)，確保程式碼和 API 文件永遠同步。
-- **`com.gorylenko.gradle-git-properties`** 這個工具會產生一個 `git.properties` 檔案，裡面記錄了當前程式碼的 Git 版本資訊 (例如是哪個分支、哪次 commit)。這樣我們就能清楚知道線上運行的程式，到底是哪一個版本。
-- **`org.cyclonedx.bom`** 軟體物料清單 (SBOM) 產生器。它會掃描專案，列出一張詳細清單，說明專案用到了哪些第三方套件。這對於檢查已知的安全漏洞和軟體授權合規性非常重要。
-- **`jacoco`** 計算程式碼測試覆蓋率的工具。它能產生報告，讓我們知道測試寫得夠不夠完整。
+- **`org.springframework.boot`** Spring Boot's core tool. Makes it easy to start projects and package everything into a single runnable file.
+- **`io.spring.dependency-management`** Spring's dependency management tool. It manages all package versions for us, so we don't need to specify each version manually.
+- **`org.openapi.generator`** Core tool for "API First" approach. It reads `openapi.yaml` and automatically generates Java interfaces and data models (DTOs), keeping code and API docs always in sync.
+- **`com.gorylenko.gradle-git-properties`** Generates a `git.properties` file with current Git version info (branch, commit). This way we always know which version is running in production.
+- **`org.cyclonedx.bom`** Software Bill of Materials (SBOM) generator. It scans the project and lists all third-party packages used. Essential for checking known security vulnerabilities and license compliance.
+- **`jacoco`** Code test coverage tool. Generates reports showing how complete our tests are.
 
-### 關鍵依賴 (Dependencies)
+### Key Dependencies
 
-這些是專案執行時需要的核心套件。
+These are the core packages needed at runtime.
 
-#### API 與 Web 層
+#### API & Web Layer
 
-- **`spring-boot-starter-web`** 開發 RESTful API 的必備套件。它包含了內嵌的伺服器 (Tomcat) 和 Spring MVC 框架。
-- **`spring-boot-starter-validation`** 資料驗證工具。它讓我們可以在 DTO 上用 `@NotNull`, `@Size` 這樣的標籤，來設定資料規則。當 API 收到請求時，Spring 會自動檢查傳入的資料是否合法。
-- **`springdoc-openapi-starter-webmvc-ui`** 自動產生一個互動式的 API 文件網頁 (Swagger UI)。這個網頁會根據我們的程式碼和 API 規格，讓我們能直接在瀏覽器上測試 API。
-- **`mapstruct`** 和 **`mapstruct-processor`** 一個物件轉換工具。它能自動產生 DTO 和資料庫 Entity 互轉的程式碼，避免我們手寫大量重複的 get/set 程式。
-- **`jackson-databind-nullable`** 一個輔助套件，用來解決 JSON 資料中 `null` 和「未提供 (undefined)」的區別。這在處理部分更新 (PATCH) 的情境下特別有用，可以讓我們精確判斷：使用者是故意要把某個欄位設成 `null`，還是他根本沒打算動那個欄位。
+- **`spring-boot-starter-web`** Essential for building RESTful APIs. Includes embedded server (Tomcat) and Spring MVC framework.
+- **`spring-boot-starter-validation`** Data validation tool. Lets us use annotations like `@NotNull`, `@Size` on DTOs to set data rules. Spring automatically checks incoming data when APIs receive requests.
+- **`springdoc-openapi-starter-webmvc-ui`** Automatically generates interactive API documentation (Swagger UI). This webpage lets us test APIs directly in the browser based on our code and API specs.
+- **`mapstruct`** and **`mapstruct-processor`** Object mapping tool. Automatically generates code to convert between DTOs and database entities, avoiding lots of repetitive get/set code.
+- **`jackson-databind-nullable`** Helper package for handling the difference between `null` and "not provided (undefined)" in JSON. Especially useful for partial updates (PATCH) - lets us tell if a user intentionally set a field to `null` or just didn't touch it.
 
-#### 資料存取與快取層
+#### Data Access & Cache Layer
 
-- **`spring-boot-starter-data-jpa`** 簡化資料庫操作的工具。它讓我們用簡單的方式就能完成對資料庫的新增、讀取、更新和刪除 (CRUD)。
-- **`liquibase-core`** 資料庫版本控制工具。它讓我們能用檔案來管理資料庫結構的變化，就像用 Git 管理程式碼一樣，確保每個開發環境的資料庫結構都一致。
-- **`spring-boot-starter-cache`** 提供了一套標準的快取 API。我們可以用 `@Cacheable` 這樣的標籤輕鬆地為程式加上快取功能，而不用去管底層是用哪種快取技術。
-- **`spring-boot-starter-data-redis`** 整合 Redis 的套件。當它和 `spring-boot-starter-cache` 一起用時，Spring Boot 就會自動把 Redis 當作我們的快取儲存庫。
+- **`spring-boot-starter-data-jpa`** Simplifies database operations. Makes CRUD (Create, Read, Update, Delete) operations easy.
+- **`liquibase-core`** Database version control tool. Lets us manage database structure changes with files, like using Git for code. Ensures consistent database structure across all development environments.
+- **`spring-boot-starter-cache`** Provides standard caching API. We can easily add caching with annotations like `@Cacheable` without worrying about the underlying cache technology.
+- **`spring-boot-starter-data-redis`** Redis integration package. When used with `spring-boot-starter-cache`, Spring Boot automatically uses Redis as our cache storage.
 
-#### 可觀測性 (Observability) 層
+#### Observability Layer
 
-- **`spring-boot-starter-actuator`** 可觀測性的基礎。它提供了一系列用於監控和管理應用程式的端點，例如檢查健康狀況的 `/actuator/health`。
-- **`spring-boot-starter-aop`** 啟用 `@Observed` 註解的關鍵。它提供了一種叫做「面向切面編程 (AOP)」的技術，讓監控工具可以在我們指定的程式碼前後，自動加上紀錄指標和追蹤的邏輯。
-- **`io.micrometer:micrometer-tracing-bridge-otel`** 一個橋接器。它的作用是把 Micrometer 的追蹤指令，翻譯成 OpenTelemetry 這個監控標準能聽得懂的格式。
-- **`io.opentelemetry:opentelemetry-exporter-otlp`** 一個匯出器。它負責把追蹤 (Traces) 和日誌 (Logs) 數據，打包成 OTLP 這種標準格式，然後傳送到後端的監控系統。
-- **`io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter`** OpenTelemetry 的自動設定工具。它簡化了整合的複雜度，能自動把 OTel 的功能（例如傳送日誌）整合進 Spring Boot 專案中。
-- **`io.micrometer:micrometer-registry-otlp`** 指標匯出器。它負責把 Micrometer 收集到的各種指標 (Metrics)，轉換成 OTLP 格式並傳送出去。
-- **`io.micrometer:micrometer-registry-prometheus`** Prometheus 指標端點。它提供另一種查看指標的方式，會在 `/actuator/prometheus` 這個網址上，產生一個給 Prometheus 系統讀取的指標頁面。這在自己電腦上開發時特別好用。
+- **`spring-boot-starter-actuator`** Foundation of observability. Provides monitoring and management endpoints like `/actuator/health` for checking application health.
+- **`spring-boot-starter-aop`** Enables `@Observed` annotation. Provides "Aspect-Oriented Programming" technology that lets monitoring tools automatically add metrics and tracing logic around our code.
+- **`io.micrometer:micrometer-tracing-bridge-otel`** A bridge that translates Micrometer tracing commands into OpenTelemetry format.
+- **`io.opentelemetry:opentelemetry-exporter-otlp`** An exporter that packages traces and logs into OTLP format and sends them to backend monitoring systems.
+- **`io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter`** OpenTelemetry auto-configuration tool. Simplifies integration complexity and automatically integrates OTel features (like sending logs) into Spring Boot projects.
+- **`io.micrometer:micrometer-registry-otlp`** Metrics exporter. Converts Micrometer-collected metrics to OTLP format and sends them out.
+- **`io.micrometer:micrometer-registry-prometheus`** Prometheus metrics endpoint. Provides another way to view metrics at `/actuator/prometheus`, creating a page for Prometheus systems to read. Very useful for local development.
 
 ---
 
-## ⚙️ 環境配置與設定檔管理
+## ⚙️ Environment Configuration & Settings Management
 
-### 配置檔案載入優先級
+### Configuration File Loading Priority
 
-Spring Boot 會按照以下優先級載入配置檔案：
+Spring Boot loads configuration files in this priority:
 
-1. **`application.yml`** - 基礎共用配置
-2. **`application-{profile}.yml`** - 環境特定配置（會覆蓋基礎配置）
+1. **`application.yml`** - Base shared configuration
+2. **`application-{profile}.yml`** - Environment-specific configuration (overrides base config)
 
-Spring 在開發階段也會讀取 `config/` 資料夾下的檔案，例如 `application-local.yml` 就是專為本地開發而設計的。
+During development, Spring also reads files in the `config/` folder, like `application-local.yml` designed for local development.
 
-### 配置檔案架構設計
+### Configuration File Architecture
 
-我們的配置檔案採用分層設計，確保不同環境和部署平台的需求都能被妥善處理。
+Our configuration files use a layered design to handle different environments and deployment platforms properly.
 
-#### 基礎設定檔 (`src/main/resources/`)
+#### Base Configuration Files (`src/main/resources/`)
 
-這些檔案會被打包進 Docker Image 中，適用於所有環境的共用設定，或針對特定雲端平台的專門優化。
+These files are packaged into the Docker image, containing shared settings for all environments or platform-specific optimizations.
 
-| 檔案 | 用途 | 說明 |
-|------|------|------|
-| `application.yml` | 基礎共用設定 | 所有環境共用的基本配置 |
-| `application-gcp.yml` | Google Cloud Platform | 啟用 GCP 特有服務整合 |
-| `application-aws.yml` | Amazon Web Services | 啟用 AWS 特有服務整合 |
+| File | Purpose | Description |
+|------|---------|-------------|
+| `application.yml` | Base shared settings | Basic configuration shared by all environments |
+| `application-gcp.yml` | Google Cloud Platform | Enables GCP-specific service integrations |
+| `application-aws.yml` | Amazon Web Services | Enables AWS-specific service integrations |
 
-**GCP 環境範例**：
+**GCP Environment Example**:
 
 ```yaml
 # application-gcp.yml
 spring:
   config:
-    import: sm@  # 啟用 Google Secret Manager
+    import: sm@  # Enable Google Secret Manager
 
 management:
   endpoint:
     health:
       group:
         gcp:
-          include: "db,pubsub,gcs,spanner"  # GCP 服務健康檢查
+          include: "db,pubsub,gcs,spanner"  # GCP service health checks
 ```
 
-#### 環境特定設定檔 (`config/`)
+#### Environment-Specific Configuration (`config/`)
 
-這些檔案**不會**被打包進 Docker Image，需要在部署時從外部掛載。這種設計遵循了 [12-Factor App Codebase](https://12factor.net/) 的原則，讓同一份程式碼可以在不同環境中運行。
+These files are **NOT** packaged into the Docker image - they must be mounted externally during deployment. This design follows the [12-Factor App Codebase](https://12factor.net/) principle, allowing the same code to run in different environments.
 
-| 檔案 | 環境 | 說明 | 主要特色 |
-|------|------|------|----------|
-| `application-local.yml` | 本地開發 | 開發者電腦上的設定 | 詳細日誌、SQL 顯示、完整監控 |
-| `application-sit.yml` | 系統整合測試 | SIT 測試環境 | 完整追蹤、詳細日誌、所有端點開放 |
-| `application-uat.yml` | 使用者驗收測試 | UAT 測試環境 | 中等採樣、限制端點、接近生產配置 |
-| `application-prod-example.yml` | 正式環境範本 | 生產環境的配置參考 | 低採樣、安全配置、效能優化 |
+| File | Environment | Description | Key Features |
+|------|-------------|-------------|--------------|
+| `application-local.yml` | Local development | Developer machine settings | Detailed logs, SQL display, full monitoring |
+| `application-sit.yml` | System integration test | SIT test environment | Full tracing, detailed logs, all endpoints open |
+| `application-uat.yml` | User acceptance test | UAT test environment | Medium sampling, limited endpoints, near-production config |
+| `application-prod-example.yml` | Production template | Production config reference | Low sampling, security config, performance optimization |
 
-### 多環境啟動範例
+### Multi-Environment Startup Examples
 
-#### 本地開發
+#### Local Development
 
 ```bash
-# 純本地環境
+# Pure local environment
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
-#### 測試環境
+#### Test Environments
 
 ```bash
-# SIT 環境（本地或獨立伺服器）
+# SIT environment (local or standalone server)
 ./gradlew bootRun --args='--spring.profiles.active=sit'
 
-# SIT 環境在 GCP 上
+# SIT environment on GCP
 ./gradlew bootRun --args='--spring.profiles.active=sit,gcp'
 
-# SIT 環境在 AWS 上
+# SIT environment on AWS
 ./gradlew bootRun --args='--spring.profiles.active=sit,aws'
 ```
 
-### 🎯 配置檔案最佳實踐解析
+### 🎯 Configuration Best Practices
 
-#### 版本號動態注入
+#### Dynamic Version Injection
 
-我們使用 `@project.version@` 從 `build.gradle` 動態載入版本號：
+We use `@project.version@` to dynamically load the version from `build.gradle`:
 
 ```yaml
 spring:
   application:
-    version: '@project.version@' # 編譯時自動替換為實際版本
+    version: '@project.version@' # Automatically replaced with actual version during compile
 ```
 
-這確保了：
+This ensures:
 
-- ✅ 版本號與 build.gradle 保持一致
-- ✅ 避免手動更新版本號的錯誤
-- ✅ 監控系統能正確追蹤服務版本
+- ✅ Version stays consistent with build.gradle
+- ✅ Avoids manual version update errors
+- ✅ Monitoring systems can correctly track service versions
 
-### 配置安全性最佳實踐
+### Configuration Security Best Practices
 
-#### 🔐 機密資訊處理
+#### 🔐 Handling Sensitive Information
 
-**絕對不要** 將敏感資訊（密碼、API Key、Token）直接寫在配置檔案中。建議的處理方式：
+**Never** put sensitive info (passwords, API keys, tokens) directly in config files. Recommended approaches:
 
-1. **環境變數**：
+1. **Environment Variables**:
 
    ```yaml
    spring:
@@ -347,41 +347,41 @@ spring:
        password: ${db.password}
    ```
 
-2. **雲端 Secret Manager**：
+2. **Cloud Secret Manager**:
 
    ```yaml
    # GCP
    db.password: ${sm@project_db_password}
    ```
 
-#### 📊 環境特定調優
+#### 📊 Environment-Specific Tuning
 
-不同環境應該有不同的效能調優設定：
+Different environments should have different performance settings:
 
 ```yaml
-# application-local.yml (開發環境)
+# application-local.yml (development)
 management:
   tracing:
     sampling:
-      probability: 1.0  # 100% 採樣，方便除錯
+      probability: 1.0  # 100% sampling for debugging
 
-# application-prod.yml (正式環境)
+# application-prod.yml (production)
 management:
   tracing:
     sampling:
-      probability: 0.1  # 10% 採樣，減少效能影響
+      probability: 0.1  # 10% sampling to reduce performance impact
 ```
 
-### VSCode 開發環境設定
+### VSCode Development Setup
 
-建議建立 `.vscode/launch.json` 來簡化開發流程。這個檔案可以讓你直接在 VSCode 中啟動和除錯 Spring Boot 應用程式，而不需要每次都在終端機輸入長長的指令。
+We recommend creating `.vscode/launch.json` to simplify development. This file lets you start and debug Spring Boot applications directly in VSCode without typing long commands in the terminal.
 
-#### 透過 VSCode 指令面板建立 (推薦)
+#### Create via VSCode Command Palette (Recommended)
 
-1. **開啟指令面板**：使用快捷鍵 `Ctrl+Shift+P` (Windows/Linux) 或 `Cmd+Shift+P` (macOS)
-2. **搜尋指令**：輸入 `Java: Run and Debug` 並選擇
-3. **選擇主類別**：VSCode 會掃描專案，選擇 `com.example.demo.DemoApplication`
-4. **自動產生設定**：這時會自動在專案根目錄建立 `.vscode/launch.json` 檔案
+1. **Open Command Palette**: Use `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS)
+2. **Search Command**: Type `Java: Run and Debug` and select it
+3. **Select Main Class**: VSCode will scan the project, choose `com.example.demo.DemoApplication`
+4. **Auto-generate Config**: This automatically creates `.vscode/launch.json` in the project root
 
 ```json
 {
@@ -403,165 +403,165 @@ management:
 
 ---
 
-## 🛠️ 開發與設定
+## 🛠️ Development & Setup
 
-### 開發指南
+### Development Guide
 
-- 當 `openapi.yaml` 檔案有變動時，需要手動執行 `./gradlew clean openApiGenerate` 指令，來重新產生 API 相關的程式碼。
-- 使用 `./gradlew bootRun --args='--spring.profiles.active=local'` 指令，可以用 `local` 設定檔來啟動專案。
-- 在本機開發時，可以到 `http://localhost:8080/swagger-ui.html` 查看和測試 API。
+- When `openapi.yaml` changes, manually run `./gradlew clean openApiGenerate` to regenerate API code
+- Use `./gradlew bootRun --args='--spring.profiles.active=local'` to start with `local` profile
+- During local development, visit `http://localhost:8080/swagger-ui.html` to view and test APIs
 
-### IDE 整合
+### IDE Integration
 
-關於 VSCode 和其他 IDE 的開發環境設定，請參考上一章節 **⚙️ 環境配置與設定檔管理** 中的詳細說明。
+For VSCode and other IDE development setup, see the detailed instructions in **⚙️ Environment Configuration & Settings Management** section above.
 
 ---
 
-## 🤝 API First 開發流程
+## 🤝 API First Development Workflow
 
-這個專案採用 **API First** 開發模式。簡單來說，就是「先定義好 API 規格，再開始寫程式」。
+This project follows **API First** development - "define API specs first, then write code".
 
-我們會先把 API 的所有細節（像是路徑、參數、回傳格式）都寫在 `openapi.yaml` 這個檔案裡。這份檔案就是我們唯一的、最終的標準，稱為**「單一事實來源 (Single Source of Truth)」**。這樣可以確保 API 文件和實際程式碼永遠保持一致。
+We write all API details (like paths, parameters, response formats) in `openapi.yaml`. This file is our single, final standard - the **"Single Source of Truth"**. This ensures API documentation and actual code always stay in sync.
 
-### 運作方式
+### How It Works
 
-我們透過 `org.openapi.generator` 這個 Gradle 工具來實現自動化。當你編譯專案時，它會做幾件事：
+We use the `org.openapi.generator` Gradle tool for automation. When you compile the project, it:
 
-1. **讀取規格**：讀取 `dev-resources/openapi.yaml` 檔案的內容。
-2. **產生程式碼**：根據規格，自動產生對應的 Java 介面 (Interface) 和資料傳輸物件 (DTO)。
-3. **納入編譯**：專案會把這些自動產生的程式碼當作原始碼的一部分。
-4. **開發者實作**：開發人員只需要專心寫商業邏輯，去實作 (implement) 這些自動產生的介面。
+1. **Reads Spec**: Reads the `dev-resources/openapi.yaml` file
+2. **Generates Code**: Automatically generates corresponding Java interfaces and DTOs
+3. **Includes in Build**: Treats generated code as part of the source code
+4. **Developer Implementation**: Developers focus on business logic, implementing the generated interfaces
 
-### build.gradle 中的關鍵設定
+### Key Settings in build.gradle
 
-來看看 `openApiGenerate` 這個任務的詳細設定：
+Let's look at the `openApiGenerate` task configuration:
 
 ```groovy
 tasks.named('openApiGenerate') {
     generatorName.set("spring")
     library.set("spring-cloud")
-    inputSpec.set(layout.projectDirectory.file("dev-resources/openapi.yaml").asFile.path) // API 規格檔在哪
-    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().asFile.path)      // 產生的程式碼要放哪
-    apiPackage.set("com.example.demo.interfaces.api")   // 產生的 API 介面要放在哪個 package
-    modelPackage.set("com.example.demo.interfaces.dto") // 產生的 DTO 模型要放在哪個 package
+    inputSpec.set(layout.projectDirectory.file("dev-resources/openapi.yaml").asFile.path) // Where the API spec is
+    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().asFile.path)      // Where generated code goes
+    apiPackage.set("com.example.demo.interfaces.api")   // Package for generated API interfaces
+    modelPackage.set("com.example.demo.interfaces.dto") // Package for generated DTOs
     configOptions.set([
         hateoas: "false",
-        interfaceOnly: "true",        // ✨ 只產生介面，不產生實作類
-        useResponseEntity: "true",    // ✨ API 回應時使用 Spring 的 ResponseEntity<T>
-        useSpringBoot3: "true",       // ✨ 確保產生的程式碼相容 Spring Boot 3
-        useTags: "true",              // ✨ 根據 YAML 中的 "tags" 屬性來分組 API
-        unhandledException: "true"    // ✨ 強制開發者處理所有可能的錯誤
+        interfaceOnly: "true",        // ✨ Generate interfaces only, not implementations
+        useResponseEntity: "true",    // ✨ Use Spring's ResponseEntity<T> for API responses
+        useSpringBoot3: "true",       // ✨ Ensure compatibility with Spring Boot 3
+        useTags: "true",              // ✨ Group APIs by "tags" in YAML
+        unhandledException: "true"    // ✨ Force developers to handle all possible errors
     ])
 }
 ```
 
-**重要參數解析：**
+**Important Parameters Explained:**
 
 - `interfaceOnly: "true"`
-  - **作用**：只產生 Java 的 `interface` (介面)，不會產生實際的 `Controller` 實作類別。
-  - **好處**：讓開發者可以保有彈性，自由地去實作背後的商業邏輯。
+  - **Purpose**: Only generates Java `interface`, not actual `Controller` implementation classes
+  - **Benefit**: Gives developers flexibility to implement business logic freely
 
 - `useSpringBoot3: "true"`
-  - **作用**：確保產生的程式碼跟 Spring Boot 3 相容。
-  - **影響**：會使用最新的 Jakarta EE 規範，而不是舊的 `javax`。
+  - **Purpose**: Ensures generated code is compatible with Spring Boot 3
+  - **Impact**: Uses latest Jakarta EE specs instead of old `javax`
 
 - `useTags: "true"`
-  - **作用**：在 `openapi.yaml` 裡，可以幫 API 加上 `tags` 標籤。這個設定會根據不同的標籤，產生不同的 API 介面檔案。
-  - **好處**：可以避免所有 API 都擠在一個巨大的檔案裡，讓程式碼更好維護。
+  - **Purpose**: In `openapi.yaml`, you can add `tags` to APIs. This setting generates different API interface files based on tags
+  - **Benefit**: Avoids cramming all APIs into one huge file, making code more maintainable
 
 - `useResponseEntity: "true"`
-  - **作用**：讓 API 方法的回傳型別變成 Spring 的 `ResponseEntity<T>`。
-  - **好處**：讓我們可以更精準地控制 HTTP 回應的狀態碼 (例如 200, 201, 404) 和 Headers。
+  - **Purpose**: Makes API methods return Spring's `ResponseEntity<T>`
+  - **Benefit**: Gives precise control over HTTP response codes (like 200, 201, 404) and headers
 
 - `unhandledException: "true"`
-  - **作用**：在產生的介面方法上加上 `throws Exception`。
-  - **目的**：強制開發者必須去思考和處理可能發生的錯誤，不能假裝沒看到。
+  - **Purpose**: Adds `throws Exception` to generated interface methods
+  - **Goal**: Forces developers to think about and handle possible errors
 
 - `hateoas: "false"`
-  - **作用**：關閉 HATEOAS 功能。這是一種讓 API 回應包含相關操作連結的風格，但我們一般的 RESTful API 通常用不到。
+  - **Purpose**: Disables HATEOAS functionality (a style where API responses include related operation links, usually not needed for regular REST APIs)
 
-其中 `interfaceOnly: "true"` 這個設定，讓工具只產生 API 的「規格」和資料模型，而 Controller 的「實作」由開發者自己完成。這有助於把「API 的定義」和「商業邏輯的實現」漂亮地分開。
+The `interfaceOnly: "true"` setting is key - it generates only API "specifications" and data models, while Controller "implementations" are done by developers. This cleanly separates "API definition" from "business logic implementation".
 
-### API First 的優點
+### Benefits of API First
 
-- **契約即文件**：`openapi.yaml` 本身就是最準確、最新的 API 文件。
-- **強制一致性**：因為我們的 `BookController` 必須實作 `BooksApi` 這個介面，所以任何跟規格不符的修改，在編譯階段就會直接報錯，無法通過。
-- **平行開發**：後端工程師在開發 API 功能的同時，前端工程師或其他團隊，可以直接拿 `openapi.yaml` 去產生假的客戶端程式 (Client Stub) 或 Mock Server 來進行開發測試，完全不用等待後端完成。
+- **Contract as Documentation**: `openapi.yaml` itself is the most accurate, up-to-date API documentation
+- **Enforced Consistency**: Since our `BookController` must implement the `BooksApi` interface, any spec-breaking changes fail at compile time
+- **Parallel Development**: While backend developers build API features, frontend developers or other teams can use `openapi.yaml` to generate client stubs or mock servers for development and testing
 
 ---
 
-## 🗺️ 物件映射 (MapStruct)
+## 🗺️ Object Mapping (MapStruct)
 
-在專案裡，我們用到了這兩個套件：
+We use these two packages:
 
 - `org.mapstruct:mapstruct`
 - `org.mapstruct:mapstruct-processor`
 
-### 用途
+### Purpose
 
-在分層架構中，我們通常不希望把代表資料庫表格的物件 (Entity) 直接傳給前端或外部使用者。因此，我們會建立一種專門用來傳輸資料的物件 (DTO)。
+In layered architecture, we don't want to pass database entities directly to frontend or external users. Instead, we create special Data Transfer Objects (DTOs).
 
-MapStruct 是一個專門處理「物件轉換」的工具。它能自動幫我們產生 Entity 和 DTO 之間互相轉換的程式碼。
+MapStruct is a tool for "object conversion". It automatically generates code to convert between Entities and DTOs.
 
-### 優點
+### Benefits
 
-- **效能好**：它在編譯程式碼的時候就產生了實際的 Java 轉換程式，執行時不需要靠反射，所以速度非常快。
-- **型別安全**：如果在轉換時，兩個物件的欄位名稱或型別對不上，編譯就會直接失敗，能提早發現錯誤。
-- **減少樣板程式碼**：開發者只需要定義一個轉換的介面，MapStruct 就會自動產生所有 get/set 的對應程式碼，非常省事。
+- **Great Performance**: It generates actual Java conversion code at compile time without reflection, so it's very fast
+- **Type Safety**: If field names or types don't match during conversion, compilation fails, catching errors early
+- **Less Boilerplate**: Developers just define a conversion interface, MapStruct generates all the get/set mapping code automatically
 
-### build.gradle中的關鍵設定
+### Key Settings in build.gradle
 
 ```groovy
 tasks.withType(JavaCompile) {
     options.compilerArgs = [
-        // 告訴 MapStruct，產生的轉換器要是一個 Spring Bean，方便注入
+        // Tell MapStruct to generate converters as Spring Beans for easy injection
         '-Amapstruct.defaultComponentModel=spring',
-        // 產生的程式碼中不包含時間戳，這能確保每次建置的結果都完全相同
+        // Don't include timestamps in generated code, ensures identical builds
         '-Amapstruct.suppressGeneratorTimestamp=true',
-        // 在建置過程中啟用詳細日誌，方便除錯
+        // Enable detailed logs during build for debugging
         '-Amapstruct.verbose=true',
-        // 保留方法的參數名稱，這對於 Spring Cache 解析 SpEL 表達式 (如 #id) 至關重要
+        // Preserve method parameter names, crucial for Spring Cache to parse SpEL expressions (like #id)
         '-parameters'
     ]
 }
 ```
 
-### Mapper 介面定義 (`BookMapper.java`)
+### Mapper Interface Definition (`BookMapper.java`)
 
-我們定義一個 `BookMapper` 介面，並用 `@Mapper` 標籤告訴 MapStruct 這是個轉換器。設定 `componentModel = "spring"` 後，MapStruct 產生的 `BookMapperImpl` 類別會自動加上 `@Component` 標籤，這樣它就能像一個 Spring Bean 一樣，被注入到其他地方使用。
+We define a `BookMapper` interface with `@Mapper` annotation to tell MapStruct it's a converter. With `componentModel = "spring"`, the generated `BookMapperImpl` class automatically gets `@Component` annotation, making it injectable as a Spring Bean.
 
 ```java
 @Mapper(
-    unmappedTargetPolicy = ReportingPolicy.IGNORE,  // 忽略目標物件中未被映射的屬性，避免編譯時產生警告
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE // 當來源物件屬性為 null 時，不更新目標物件的對應屬性
+    unmappedTargetPolicy = ReportingPolicy.IGNORE,  // Ignore unmapped properties in target object, avoid compile warnings
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE // When source property is null, don't update target property
 )
 public interface BookMapper {
-    // 將 BookDto (DTO) 轉換為 Book (Entity)
+    // Convert BookDto (DTO) to Book (Entity)
     Book toEntity(BookDto dto);
 
-    // 將 Book (Entity) 轉換為 BookDto (DTO)
+    // Convert Book (Entity) to BookDto (DTO)
     BookDto toDto(Book entity);
 }
 ```
 
-### 使用範例
+### Usage Example
 
 ```java
 @RestController
-@RequiredArgsConstructor // Lombok 的註解，會自動為 final 欄位建立建構子並注入
+@RequiredArgsConstructor // Lombok annotation, creates constructor for final fields with injection
 public class BookController implements BooksApi {
 
     private final BookService bookService;
-    private final BookMapper bookMapper; // ✨ MapStruct 產生的轉換器被注入進來
+    private final BookMapper bookMapper; // ✨ MapStruct-generated converter injected here
 
     @Override
     public ResponseEntity<BookDto> booksPost(@Valid BookRequest bookRequest) {
-        // 呼叫 mapper，將前端傳來的 Request DTO 轉成資料庫用的 Entity
+        // Call mapper to convert frontend Request DTO to database Entity
         Book bookEntity = bookMapper.toEntity(bookRequest);
 
         Book createdBook = bookService.createBook(bookEntity);
 
-        // 呼叫 mapper，將資料庫回傳的 Entity 轉成要回給前端的 Response DTO
+        // Call mapper to convert database Entity to frontend Response DTO
         BookDto responseDto = bookMapper.toDto(createdBook);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
@@ -571,67 +571,67 @@ public class BookController implements BooksApi {
 
 ---
 
-## 📜 資料庫版本控制 (Liquibase)
+## 📜 Database Version Control (Liquibase)
 
-在團隊開發中，管理資料庫結構 (Schema) 的變更是一大挑戰。如果每個人都隨意在自己的電腦上修改資料庫，或是依賴 JPA 的 `ddl-auto: update` 功能，很容易造成每個人的資料庫長得不一樣，最後引發各種奇怪的錯誤。
+In team development, managing database schema changes is a big challenge. If everyone randomly modifies their local database or relies on JPA's `ddl-auto: update`, it's easy to end up with different database structures, causing weird errors.
 
-這個專案使用 Liquibase，把資料庫的結構變更當作程式碼一樣來管理。這確保了從開發、測試到正式上線，所有環境的資料庫結構都是一致且可以追蹤的。
+This project uses Liquibase to manage database structure changes like code. This ensures consistent and trackable database structures from development to testing to production.
 
-### 為什麼不用 ddl-auto?
+### Why Not Use ddl-auto?
 
-雖然 `spring.jpa.hibernate.ddl-auto = update` 在開發初期很方便，但它有幾個嚴重的問題：
+While `spring.jpa.hibernate.ddl-auto = update` is convenient in early development, it has serious problems:
 
-- **無法精確控制**：你沒辦法控制它具體會產生什麼樣的 SQL 指令。
-- **可能遺失資料**：在某些情況下，它可能會誤判而刪除欄位或表格，導致資料遺失。
-- **沒有版本紀錄**：你完全不知道資料庫在什麼時候、被誰、改了什麼東西。
-- **不適用於正式環境**：在正式環境中，絕對不能使用 `update`。
+- **No Precise Control**: You can't control exactly what SQL commands it generates
+- **Possible Data Loss**: In some cases, it might misjudge and delete columns or tables
+- **No Version History**: You have no idea when, who, or what changed the database
+- **Not for Production**: Never use `update` in production environments
 
-Liquibase 用一個更嚴謹的流程解決了這些問題。
+Liquibase solves these problems with a more rigorous process.
 
-### Liquibase 如何運作？
+### How Liquibase Works
 
-- **自動執行**：當 Spring Boot 專案啟動時，它會偵測到 Liquibase 的存在，並自動執行資料庫的更新。
-- **變更日誌 (Changelog)**：開發者把所有對資料庫的修改（例如新增表格、增加欄位），都寫在「變更日誌」檔案裡。我們這裡用的是 YAML 格式。
-- **追蹤表**：Liquibase 會在你的資料庫裡建立兩張管理用的表格：`DATABASECHANGELOG` 和 `DATABASECHANGELOGLOCK`。
-  - `DATABASECHANGELOGLOCK`：這是一把鎖。它確保在同一時間，只有一個程式實例在執行資料庫變更，避免大家搶著修改造成衝突。
-  - `DATABASECHANGELOG`：這是一張紀錄表。每一個被成功執行的變更都會被記在裡面。每次專案啟動，Liquibase 就會比對日誌檔和這張表，只執行那些還沒被記錄過的、新的變更。
+- **Automatic Execution**: When Spring Boot starts, it detects Liquibase and automatically runs database updates
+- **Changelog**: Developers write all database modifications (like creating tables, adding columns) in "changelog" files. We use YAML format here
+- **Tracking Tables**: Liquibase creates two management tables in your database: `DATABASECHANGELOG` and `DATABASECHANGELOGLOCK`
+  - `DATABASECHANGELOGLOCK`: A lock ensuring only one application instance executes database changes at a time, avoiding conflicts
+  - `DATABASECHANGELOG`: A record table. Every successfully executed change is recorded here. Each time the app starts, Liquibase compares the changelog file with this table, executing only new changes not yet recorded
 
-### 專案實踐
+### Project Implementation
 
-#### 主變更日誌 (Master Changelog)
+#### Master Changelog
 
-這是 Liquibase 的入口檔案，放在 `src/main/resources/db/changelog/db.changelog-master.yaml`。它本身不寫具體的 SQL 變更，而是像一本書的目錄，負責引用其他變更檔案。
+This is Liquibase's entry file at `src/main/resources/db/changelog/db.changelog-master.yaml`. It doesn't contain actual SQL changes but acts like a table of contents, referencing other change files.
 
 ```yaml
 # db.changelog-master.yaml
 databaseChangeLog:
   - include:
       file: history/20250614.yaml
-      relativeToChangelogFile: true # 路徑是相對於這個主檔案
-      description: 初始化表格
-  # ✨ 當有新的變更時，就在下面新增一行 include
+      relativeToChangelogFile: true # Path relative to this master file
+      description: Initialize tables
+  # ✨ When you have new changes, add another include below
   # - include:
   #     file: history/20250615.yaml
   #     relativeToChangelogFile: true
-  #     description: 新增使用者表格
+  #     description: Add user table
 ```
 
-#### 變更集檔案 (Changeset File)
+#### Changeset Files
 
-所有實際的資料庫結構變更都定義在這些檔案裡。我們把它們放在 `history/` 資料夾，並用日期命名，方便追蹤。一個檔案可以包含多個 `changeSet`。每個 `changeSet` 都是一個獨立的、不可變更的資料庫操作單位，由 `id` 和 `author` 唯一標識。
+All actual database structure changes are defined in these files. We put them in the `history/` folder, named by date for easy tracking. One file can contain multiple `changeSet`s. Each `changeSet` is an independent, immutable database operation unit, uniquely identified by `id` and `author`.
 
-`history/20250614.yaml` 的內容範例：
+Example `history/20250614.yaml`:
 
 ```yaml
 # history/20250614.yaml
 databaseChangeLog:
 - changeSet:
-    id: 1749857749130-1 # 唯一的 ID，可以是數字、字串或自動產生
+    id: 1749857749130-1 # Unique ID, can be number, string, or auto-generated
     author: samzhu (generated)
     changes:
     - createTable:
         tableName: book
-        remarks: 書本資料表，用於儲存書本的基本資訊
+        remarks: Book table for storing book information
         columns:
         - column:
             name: id
@@ -645,87 +645,87 @@ databaseChangeLog:
             type: VARCHAR(255)
             constraints:
               nullable: false
-        #... 其他欄位...
+        #... other columns...
 ```
 
-#### 開發流程：如何新增一筆資料庫變更？
+#### Development Workflow: How to Add a Database Change
 
-假設你需要為 `book` 表格增加一個 `stock_quantity` (庫存數量) 欄位。
+Let's say you need to add a `stock_quantity` column to the `book` table.
 
-1. **建立新檔案**：在 `src/main/resources/db/changelog/history/` 目錄下建立一個新的 YAML 檔，例如 `20250616-add-stock-to-book.yaml`。
-2. **定義 ChangeSet**：在新檔案裡，寫下你的變更內容。記得 `id` 必須是獨一無二的。
-3. **更新主檔案**：回到 `db.changelog-master.yaml`，把剛剛建立的新檔案 `include` 進來。
+1. **Create New File**: Create a new YAML file in `src/main/resources/db/changelog/history/`, like `20250616-add-stock-to-book.yaml`
+2. **Define ChangeSet**: Write your change in the new file. Remember `id` must be unique
+3. **Update Master File**: Go back to `db.changelog-master.yaml` and `include` the new file
 
     ```yaml
     databaseChangeLog:
       - include:
           file: history/20250614.yaml
           relativeToChangelogFile: true
-          description: 初始化表格
-      - include: # ✨ 新增這一段
+          description: Initialize tables
+      - include: # ✨ Add this section
           file: history/20250616-add-stock-to-book.yaml
           relativeToChangelogFile: true
-          description: 為書本新增庫存欄位
+          description: Add stock column to book
     ```
 
-4. **啟動應用**：重新啟動 Spring Boot 專案。Liquibase 會檢查 `DATABASECHANGELOG` 表，發現這個新的 `changeSet` 還沒被執行過，於是它就會執行對應的 `ALTER TABLE` SQL 指令，幫你的資料庫加上新欄位。
+4. **Start Application**: Restart Spring Boot. Liquibase checks the `DATABASECHANGELOG` table, finds this new `changeSet` hasn't been executed, and runs the corresponding `ALTER TABLE` SQL command to add the new column
 
-這個流程確保了每一次資料庫變更都有紀錄、可追蹤，並且能在團隊所有成員和所有環境中自動且一致地被應用。
+This process ensures every database change is recorded, trackable, and automatically applied consistently across all team members and environments.
 
 ---
 
-## ⚡️ 快取機制 (Spring Cache + Redis)
+## ⚡️ Caching Mechanism (Spring Cache + Redis)
 
-為了加快應用程式的回應速度，並減輕資料庫的壓力，我們導入了快取機制。對於那些不常變動但又經常被讀取的資料，快取可以大幅提升效能。
+To speed up application response times and reduce database load, we've implemented caching. For data that doesn't change often but is read frequently, caching can dramatically improve performance.
 
-這個專案使用 **Spring Cache** 作為統一的快取標準，並以 **Redis** 作為實際的快取工具。
+This project uses **Spring Cache** as the unified caching standard with **Redis** as the actual cache implementation.
 
-### Spring Cache: 一致的快取抽象
+### Spring Cache: Consistent Cache Abstraction
 
-`spring-boot-starter-cache` 提供了一套標準的快取 API。它的最大好處是讓我們的商業邏輯程式碼，不用去管底層到底是用什麼技術來做快取。開發者只需要學會用幾個標準的註解，就能幫程式加上快取功能。
+`spring-boot-starter-cache` provides a standard caching API. Its biggest benefit is letting our business logic code not worry about the underlying cache technology. Developers just need to learn a few standard annotations to add caching functionality.
 
-- `@EnableCaching`：在設定類別上使用，是打開 Spring Cache 功能的總開關。
-- `@Cacheable`：用在讀取資料的方法上。當程式執行到這個方法時，Spring 會先去快取裡找看看有沒有資料。如果有，就直接從快取回傳，不會執行方法本身。如果沒有，它才會去執行方法，並把方法的執行結果存進快取，然後再回傳。
-- `@CacheEvict`：用在修改或刪除資料的方法上。當資料被變更時，用這個註解來清除快取裡的舊資料，避免使用者讀到過期的內容。
+- `@EnableCaching`: Used on configuration classes, the master switch to enable Spring Cache
+- `@Cacheable`: Used on data reading methods. When this method is called, Spring first checks the cache. If data exists, it returns directly from cache without executing the method. If not, it executes the method, stores the result in cache, then returns it
+- `@CacheEvict`: Used on data modification or deletion methods. When data changes, this annotation clears old data from cache to avoid users seeing stale content
 
-### Redis: 高效能的快取實現
+### Redis: High-Performance Cache Implementation
 
-我們選擇 Redis 作為快取伺服器。因為 Spring Boot 強大的自動設定功能，整合 Redis 非常簡單：
+We chose Redis as our cache server. Thanks to Spring Boot's powerful auto-configuration, integrating Redis is very simple:
 
-1. 在 `build.gradle` 中加入 `spring-boot-starter-data-redis` 這個依賴。
-2. 在 `application.yml` 中設定好 Redis 的連線位址。
+1. Add `spring-boot-starter-data-redis` dependency in `build.gradle`
+2. Configure Redis connection in `application.yml`
 
-只要完成這兩步，Spring Boot 就會自動把 Redis 設定成我們預設的快取工具。
+With just these two steps, Spring Boot automatically sets Redis as our default cache implementation.
 
-### 快取實踐
+### Cache Implementation
 
-我們可以參考 `BookService` 裡的快取設計。
+Let's look at the cache design in `BookService`.
 
-#### 策略：只快取高頻讀取的單一項目
+#### Strategy: Only Cache High-Frequency Single Item Reads
 
-在專案中，我們採用了更精準的快取策略。我們發現「獲取所有書本」(`getAllBooks()`) 這個操作，可能會回傳大量資料，而且只要任何一本書有變動，整個列表快取就得作廢，效益不高。
+In our project, we use a more precise caching strategy. We found that "get all books" (`getAllBooks()`) might return lots of data, and if any book changes, the entire list cache becomes invalid - not very efficient.
 
-因此，我們的策略是：**只快取 `getBookById(id)` 這種讀取單一項目、且使用頻率高的操作**。
+Therefore, our strategy is: **Only cache `getBookById(id)` - single item reads with high usage frequency**.
 
-#### 1. 啟用快取功能
+#### 1. Enable Caching
 
-我們在 `CacheConfig.java` 檔案中啟用快取，並定義快取空間的名稱。
+We enable caching in `CacheConfig.java` and define cache space names.
 
 ```java
 // src/main/java/com/example/demo/config/CacheConfig.java
 @Configuration
-@EnableCaching // ✨ 啟用快取功能的總開關
+@EnableCaching // ✨ Master switch to enable caching
 public class CacheConfig {
     /**
-     * 定義一個叫做 "books" 的快取空間名稱
+     * Define a cache space named "books"
      */
     public static final String BOOKS_CACHE = "books";
 }
 ```
 
-#### 2. 快取單一書本的讀取操作
+#### 2. Cache Single Book Reads
 
-我們只在 `getBookById` 這個方法上加上 `@Cacheable` 註解。注意 `key` 的寫法，我們用了一點小技巧來組合出更有意義的鍵值。
+We only add `@Cacheable` annotation to the `getBookById` method. Note the `key` syntax - we use a little trick to create more meaningful keys.
 
 ```java
 // src/main/java/com/example/demo/applications/BookService.java
@@ -734,25 +734,25 @@ public class BookService {
     //...
 
     /**
-     * 根據 ID 獲取書本。
-     * @Cacheable 會將結果存入名為 'books' 的快取空間，
-     * 並以 'book_{id}' 作為 key。
+     * Get book by ID.
+     * @Cacheable stores results in 'books' cache space,
+     * using 'book_{id}' as key.
      */
     @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
     public Book getBookById(Integer id) {
-        // ✨ 這行 log 只會在快取裡找不到資料 (cache miss) 時才會印出
-        log.info("從資料庫獲取書本 ID: {}", id);
+        // ✨ This log only prints on cache miss
+        log.info("Fetching book from database, ID: {}", id);
         return bookRepository.findById(id)
-           .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到指定的書本"));
+           .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
     }
 }
 ```
 
-`key = "'book_' + #id"`：這是一個很好的實踐。它幫所有跟書本相關的快取鍵都加上了 `book_` 這個前綴。當 `id` 是 `123` 時，存在 Redis 裡的鍵就會是 `book_123`，而不是單純的 `123`。這大大提高了可讀性，也避免了和其他也用數字當 ID 的快取（例如 `user_123`）搞混。
+`key = "'book_' + #id"`: This is a good practice. It adds a `book_` prefix to all book-related cache keys. When `id` is `123`, the Redis key becomes `book_123` instead of just `123`. This greatly improves readability and avoids confusion with other numeric ID caches (like `user_123`).
 
-#### 3. 精確地清除單一快取
+#### 3. Precise Single Cache Eviction
 
-因為我們不再快取整個書本列表，所以在更新或刪除一本書時，我們也不需要清空所有書本的快取。我們只需要精確地清除那一本被修改或刪除的書的快取。
+Since we don't cache the entire book list, when updating or deleting a book, we don't need to clear all book caches. We only need to precisely clear the cache for that specific modified or deleted book.
 
 ```java
 // src/main/java/com/example/demo/applications/BookService.java
@@ -761,8 +761,8 @@ public class BookService {
     //...
 
     /**
-     * 更新書本。
-     * @CacheEvict 只會清除 'books' 快取中，key 為 'book_{id}' 的那筆資料。
+     * Update book.
+     * @CacheEvict only clears the specific 'book_{id}' entry in 'books' cache.
      */
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
@@ -771,8 +771,8 @@ public class BookService {
     }
 
     /**
-     * 刪除書本。
-     * 同樣地，只清除被刪除的那本書的快取。
+     * Delete book.
+     * Similarly, only clears the deleted book's cache.
      */
     @Async
     @Transactional
@@ -783,15 +783,15 @@ public class BookService {
 }
 ```
 
-`createBook` (新增書本) 的方法現在不需要任何 `@CacheEvict` 註解。因為新增一本書，並不會讓任何已經存在的快取資料變成「舊的」或「錯的」。
+`createBook` (add new book) method now doesn't need any `@CacheEvict` annotation. Adding a new book doesn't make any existing cached data "old" or "wrong".
 
-#### 4. 關鍵設定：讓 `#id` 表達式生效
+#### 4. Critical Setting: Making `#id` Expression Work
 
-當我們在 `@Cacheable` 或 `@CacheEvict` 中使用像 `key = "#id"` 這樣的 SpEL 表達式時，我們其實是在告訴 Spring：「請使用這個方法的 `id` 參數作為快取的鍵」。
+When we use SpEL expressions like `key = "#id"` in `@Cacheable` or `@CacheEvict`, we're telling Spring: "Please use this method's `id` parameter as the cache key".
 
-但 Spring 要怎麼知道那個參數就叫做 `id` 呢？在預設情況下，Java 編譯器為了節省空間，並不會把方法的參數名稱（例如 `id`, `book`）保留在編譯後的 `.class` 檔案中。這會導致 Spring Cache 在解析 `#id` 時找不到對應的參數，進而引發錯誤。
+But how does Spring know which parameter is called `id`? By default, the Java compiler doesn't preserve method parameter names (like `id`, `book`) in compiled `.class` files to save space. This causes Spring Cache to fail when parsing `#id`, throwing errors.
 
-為了解決這個問題，我們必須明確地告訴編譯器，請它保留這些參數名稱。這只需要在 `build.gradle` 中加上一個設定：
+To fix this, we must explicitly tell the compiler to preserve parameter names. Just add one setting in `build.gradle`:
 
 ```groovy
 // build.gradle
@@ -800,32 +800,32 @@ tasks.withType(JavaCompile) {
         '-Amapstruct.defaultComponentModel=spring',
         '-Amapstruct.suppressGeneratorTimestamp=true',
         '-Amapstruct.verbose=true',
-        '-parameters' // ✨ 關鍵就在這裡！
+        '-parameters' // ✨ This is the key!
     ]
 }
 ```
 
-加上了 `-parameters` 這個編譯器旗標後，Spring Cache 就能取得足夠的資訊，正確地將 `#id` 解析為 `getBookById(Integer id)` 方法中的 `id` 參數值，讓我們的動態快取鍵能夠順利運作。這個設定是專案中所有依賴參數名稱的工具（包括 MapStruct）共享的。
+With the `-parameters` compiler flag, Spring Cache gets enough information to correctly parse `#id` as the `id` parameter value in `getBookById(Integer id)` method, making our dynamic cache keys work properly. This setting is shared by all tools in the project that depend on parameter names (including MapStruct).
 
-#### 策略的優勢
+#### Strategy Advantages
 
-這種「只快取單一項目」的策略更簡單，也更有效率：
+This "cache single items only" strategy is simpler and more efficient:
 
-- **邏輯簡單**：不用再煩惱列表快取什麼時候該清、什麼時候不用清的問題。
-- **效能提升**：針對最常見的「根據 ID 查詳情」場景，提供了最直接的效能幫助。
-- **寫入影響小**：更新或刪除操作對快取的影響降到最低，只動一個鍵，不會影響到其他有效的快取資料。
+- **Simple Logic**: No more worrying about when to clear list caches
+- **Performance Boost**: Directly helps the most common "get details by ID" scenario
+- **Minimal Write Impact**: Updates or deletes have minimal cache impact, only affecting one key without touching other valid cached data
 
 ---
 
-## 🚀 實際操作：API 測試範例
+## 🚀 Hands-On: API Testing Examples
 
-當專案成功啟動後，你可以使用 `curl` 或任何 API 測試工具（如 Postman）來與應用程式互動。以下是兩個基本的操作範例。
+After successfully starting the project, you can use `curl` or any API testing tool (like Postman) to interact with the application. Here are two basic examples.
 
-### 1\. 新增一本書 (POST /books)
+### 1. Add a Book (POST /books)
 
-這個指令會向 `/books` 端點發送一個 POST 請求，新增一本書的資料。
+This command sends a POST request to `/books` endpoint to add a book.
 
-**指令：**
+**Command:**
 
 ```bash
 curl --location 'http://localhost:8080/books' \
@@ -839,8 +839,8 @@ curl --location 'http://localhost:8080/books' \
 }'
 ```
 
-**預期回應：**
-如果成功，伺服器會回傳 `201 Created` 狀態碼，以及剛剛建立的書本資料（包含由資料庫產生的 `id`）。
+**Expected Response:**
+If successful, the server returns `201 Created` status code and the created book data (including database-generated `id`).
 
 ```json
 {
@@ -853,18 +853,18 @@ curl --location 'http://localhost:8080/books' \
 }
 ```
 
-### 2\. 查詢一本書 (GET /books/{id})
+### 2. Query a Book (GET /books/{id})
 
-這個指令會向 `/books/1` 端點發送一個 GET 請求，查詢 `id` 為 1 的書本資料。
+This command sends a GET request to `/books/1` endpoint to query the book with `id` 1.
 
-**指令：**
+**Command:**
 
 ```bash
 curl --location 'http://localhost:8080/books/1'
 ```
 
-**預期回應：**
-伺服器會回傳 `200 OK` 狀態碼，以及對應的書本資料。
+**Expected Response:**
+The server returns `200 OK` status code and the corresponding book data.
 
 ```json
 {
@@ -877,35 +877,35 @@ curl --location 'http://localhost:8080/books/1'
 }
 ```
 
-**觀察快取效果：**
-你可以嘗試連續執行這個查詢指令兩次。
+**Observe Cache Effect:**
+Try running this query command twice in a row.
 
-- **第一次執行**：在應用程式的日誌中，你會看到一行類似 `從資料庫獲取書本 ID: 1` 的訊息，表示這次查詢有實際訪問資料庫。
-- **第二次執行**：這行日誌將不會出現。這是因為查詢結果已經被存在 Redis 快取中，應用程式直接從快取回傳資料，大幅提升了回應速度。你也可以在 Grafana 的 Tempo 追蹤視圖中，清楚地看到第二次請求的追蹤鏈變短了。
+- **First Run**: In the application logs, you'll see something like `Fetching book from database, ID: 1`, indicating this query actually hit the database
+- **Second Run**: This log won't appear. That's because the query result is already stored in Redis cache, and the application returns data directly from cache, greatly improving response speed. You can also clearly see the trace chain getting shorter in Grafana's Tempo tracing view.
 
 --
 
-## 🚀 效能提升：Java 21 虛擬執行緒
+## 🚀 Performance Boost: Java 21 Virtual Threads
 
-這個專案啟用了一個 Java 21 的重量級新功能：**虛擬執行緒 (Virtual Threads)**。
+This project enables a heavyweight new Java 21 feature: **Virtual Threads**.
 
-### 傳統執行緒的問題
+### Traditional Thread Problems
 
-在傳統的 Java 應用中，每一個執行緒 (Thread) 都會對應到一個作業系統的執行緒。對於網路服務這種需要大量等待（例如等待資料庫回應、等待外部 API 回應）的應用來說，這很浪費資源。當一個執行緒在等待時，它雖然沒在做事，但仍然佔著一個寶貴的系統執行緒名額，這限制了系統能同時處理的請求數量。
+In traditional Java applications, each Thread maps to an operating system thread. For network services that need lots of waiting (like waiting for database responses, external API responses), this wastes resources. When a thread is waiting, it's not doing work but still occupying a precious system thread slot, limiting the number of concurrent requests the system can handle.
 
-### 虛擬執行緒的優勢
+### Virtual Thread Advantages
 
-虛擬執行緒是由 JVM 自己管理的超輕量級執行緒。成千上萬個虛擬執行緒，可以跑在少數幾個傳統的系統執行緒上。當一個虛擬執行緒需要等待 I/O 操作時：
+Virtual threads are ultra-lightweight threads managed by the JVM itself. Thousands of virtual threads can run on just a few traditional system threads. When a virtual thread needs to wait for I/O:
 
-1. 它不會卡住底層的系統執行緒。
-2. JVM 會把它「暫停」，然後讓那個系統執行緒去跑另一個不需要等待的虛T擬執行緒的任務。
-3. 等到 I/O 操作完成後，JVM 再把原來的虛擬執行緒「喚醒」，讓它繼續往下執行。
+1. It doesn't block the underlying system thread
+2. The JVM "pauses" it and lets that system thread run another virtual thread's task
+3. When the I/O operation completes, the JVM "wakes up" the original virtual thread to continue
 
-這個機制可以大幅提升應用的吞吐量，讓我們用更少的硬體資源，就能處理更多的同時請求。
+This mechanism can greatly increase application throughput, letting us handle more concurrent requests with less hardware.
 
-### 如何啟用？
+### How to Enable?
 
-在 Spring Boot 3.2 以上的版本，啟用虛擬執行緒非常簡單，只需要在 `application.yml` 加上一行設定：
+In Spring Boot 3.2+, enabling virtual threads is very simple - just add one line to `application.yml`:
 
 ```yaml
 spring:
@@ -914,109 +914,107 @@ spring:
       enabled: true
 ```
 
-這行設定會告訴 Spring Boot，用虛擬執行緒來處理所有進來的 HTTP 請求。
+This tells Spring Boot to use virtual threads to handle all incoming HTTP requests.
 
 ---
 
-## 🔬 現代化可觀測性 (Observability) - 第一部分：Spring 的實踐
+## 🔬 Modern Observability - Part 1: Spring's Implementation
 
-「可觀測性」是為了解決一個核心問題：當我們的程式上線運行後，要如何才能知道它內部到底發生了什麼事？這樣我們才能快速找到問題、優化效能。這套系統通常建立在三大支柱上：**指標 (Metrics)**、**追蹤 (Traces)** 和 **日誌 (Logs)**。
+"Observability" solves a core problem: when our application is running in production, how can we know what's happening inside? This helps us quickly find problems and optimize performance. This system is usually built on three pillars: **Metrics**, **Traces**, and **Logs**.
 
-這就是「可觀測性三大支柱」的概念：
+These are the "Three Pillars of Observability":
 
-- **📊 指標 (Metrics)**：是在一段時間內，對數據進行統計聚合的數值
-  - 每秒有多少人訪問我的 API？
-  - 平均回應時間是多少？
-  - 錯誤率有多高？
+- **📊 Metrics**: Numerical values aggregated over time
+  - How many people access my API per second?
+  - What's the average response time?
+  - How high is the error rate?
   
-- **🔍 追蹤 (Traces)**：描繪了一個請求，從進入系統開始，到經過各個不同服務，最後回傳結果的完整旅程
-  - 一個 API 請求經過了哪些步驟？
-  - 每個步驟花了多少時間？
-  - 哪個步驟最慢？
+- **🔍 Traces**: The complete journey of a request from entering the system, through different services, to returning results
+  - What steps did an API request go through?
+  - How long did each step take?
+  - Which step was slowest?
   
-- **📝 日誌 (Logs)**：記錄了系統中發生的一個個獨立事件
-  - 某個時間點發生了什麼事？
-  - 錯誤的詳細訊息是什麼？
-  - 使用者做了什麼操作？
+- **📝 Logs**: Records of individual events in the system
+  - What happened at a specific time?
+  - What's the detailed error message?
+  - What did the user do?
 
-### Spring 的現代觀測哲學
+### Spring's Modern Observability Philosophy
 
-在寫任何監控程式碼之前，我們需要先理解 Spring Boot 3 的觀測哲學。Micrometer 的核心開發者 Jonatan Ivanov 說過：
+Before writing any monitoring code, we need to understand Spring Boot 3's observability philosophy. Micrometer's core developer Jonatan Ivanov said:
 
-> “In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…"  
-> "在這些應用程式中，我沒有手動建立任何觀測，因為我所需要的基本上都已經被我使用的框架/函式庫自動檢測了…"  
+> "In these apps I don't create any Observations manually because basically everything that I would need is automatically instrumented…"
 
-這句話揭示了一個核心思想：**優先依賴自動化檢測 (Rely on Automatic Instrumentation First)**。
+This reveals a core idea: **Rely on Automatic Instrumentation First**.
 
-當我們在專案中加入 `spring-boot-starter-actuator` 等相關套件時，Spring Boot 生態系已經自動幫我們監控了大量常見的操作，包括：
+When we add `spring-boot-starter-actuator` and related packages to our project, the Spring Boot ecosystem automatically monitors lots of common operations for us, including:
 
-- 收到的 HTTP 請求
-- 發出的 RestTemplate 請求
-- 資料庫 JDBC 查詢
-- Redis 操作
-- …等等
+- Incoming HTTP requests
+- Outgoing RestTemplate requests
+- Database JDBC queries
+- Redis operations
+- ...and more
 
-這代表我們什麼都不用做，就能在監控後台看到這些基礎設施層面的指標和追蹤。
+This means without doing anything, we can see these infrastructure-level metrics and traces in the monitoring backend.
 
-那麼，我們什麼時候才需要自己動手？
-**答案是：當自動化檢測無法觸及，而我們又想深入觀察的「自訂核心業務邏輯」時。**
+So when do we need to do it ourselves?
+**Answer: When automatic instrumentation can't reach our custom core business logic that we want to observe deeply.**
 
-例如，在我們的 `BookService` 中，`createBook` 這個方法包含了「檢查 ISBN、設定時間戳、儲存到資料庫」等多個步驟。我們希望把整個 `createBook` 操作，看作一個有商業意義的獨立單元來進行監控。這就是 `@Observed` 註解發揮作用的地方。
+For example, in our `BookService`, the `createBook` method includes multiple steps like "check ISBN, set timestamps, save to database". We want to monitor the entire `createBook` operation as a meaningful business unit. This is where the `@Observed` annotation comes in.
 
-### `@Observed`: 觀測核心業務邏輯的利器
+### `@Observed`: The Tool for Observing Core Business Logic
 
-Micrometer 是 Spring 官方指定的觀測門面，它提供了一套標準 API，讓我們的程式碼可以專注在「想要觀測什麼」，而不用去管底層的技術細節。
+Micrometer is Spring's official observability facade, providing a standard API that lets our code focus on "what to observe" without worrying about technical details.
 
-`@Observed` 註解，正是用來幫我們的自訂業務邏輯加上觀測能力的最佳實踐。如同 Jonatan Ivanov 所說：
+The `@Observed` annotation is the best practice for adding observability to our custom business logic. As Jonatan Ivanov said:
 
 > "The idea... was that we want the users to instrument their code once using a single API and have multiple benefits out of it (e.g. metrics, tracing, logging)."
-> "我們的初衷是，希望使用者能用一套 API 來檢測他們的程式碼一次，並從中獲得多重效益，例如：指標、追蹤、日誌。"
 
-這就是 `@Observed` 的核心理念：**「一次檢測，多重效益」**。
+This is the core principle of `@Observed`: **"Instrument once, multiple benefits"**.
 
-#### 為何不直接用 SDK 或 Java Agent？
+#### Why Not Use SDK or Java Agent Directly?
 
-- **相較於直接用 OpenTelemetry SDK**：如果直接用 SDK，你需要手動寫很多程式碼來開始/結束一個追蹤、設定屬性等等，很繁瑣也容易出錯。`@Observed` 用一個簡單的註解就幫你搞定了這一切。
-- **相較於使用 OpenTelemetry Java Agent**：Agent 對於自動監控已知的第三方套件（像資料庫驅動）很有效，但它看不懂你自己寫的業務方法（例如 `createBook`）代表什麼商業意義。`@Observed` 讓你可以為這個操作取一個有意義的名字，讓監控圖表更容易理解。
+- **Compared to using OpenTelemetry SDK directly**: Using SDK directly requires lots of manual code to start/end traces, set attributes, etc. - tedious and error-prone. `@Observed` handles all this with a simple annotation.
+- **Compared to using OpenTelemetry Java Agent**: Agent is effective for automatically monitoring known third-party packages (like database drivers), but it doesn't understand the business meaning of your custom methods (like `createBook`). `@Observed` lets you give this operation a meaningful name, making monitoring charts easier to understand.
 
-`@Observed` 註解在「簡單方便」和「功能強大」之間取得了一個很好的平衡。它比直接用 SDK 簡潔，又比 Java Agent 在監控自訂業務邏輯時更有彈性。
+`@Observed` strikes a great balance between "simple convenience" and "powerful functionality". It's more concise than direct SDK use, yet more flexible than Java Agent for monitoring custom business logic.
 
-### `@Observed` 啟用與實踐指南
+### `@Observed` Setup and Practice Guide
 
-在 Spring Boot 3 中，啟用 `@Observed` 的設定已經非常簡單。
+In Spring Boot 3, setting up `@Observed` is already very simple.
 
-#### 步驟 1：加入核心依賴
+#### Step 1: Add Core Dependencies
 
-在 `build.gradle` 檔案中，確保有這兩個關鍵依賴：
+In `build.gradle`, ensure these two key dependencies:
 
 ```groovy
 // build.gradle
 dependencies {
-    // 提供 Micrometer 觀測功能的基礎，是所有觀測功能的基石
+    // Provides foundation for Micrometer observability, cornerstone of all observability features
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // 提供 AOP (面向切面編程) 的能力，這是 @Observed 能運作的技術基礎
+    // Provides AOP (Aspect-Oriented Programming) capability, the technical foundation for @Observed
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 ```
 
-#### 步驟 2：開啟全域開關
+#### Step 2: Enable Global Switch
 
-在 `application.yml` 中，打開基於註解的觀測功能：
+In `application.yml`, turn on annotation-based observability:
 
 ```yaml
 # src/main/resources/application.yml
 management:
   observations:
     annotations:
-      enabled: true  # @Observed 功能的總開關
+      enabled: true  # Master switch for @Observed functionality
 ```
 
-#### 步驟 3：設定非同步追蹤 (如果你的專案有用到)
+#### Step 3: Configure Async Tracing (if your project uses it)
 
-Spring Boot 3.2 之後，`@Observed` 所需的核心元件 `ObservedAspect` 已經會被自動設定了，你不需要手動去宣告它。
+Since Spring Boot 3.2, the core component `ObservedAspect` needed by `@Observed` is auto-configured - you don't need to declare it manually.
 
-現在，只有當你的專案中使用了 `@Async` 這種非同步操作時，為了確保追蹤資訊（例如 `traceId`）能夠在不同執行緒之間正確傳遞，你才需要建立下面的設定檔：
+Now, only when your project uses asynchronous operations like `@Async`, to ensure tracing information (like `traceId`) propagates correctly between threads, you need to create this configuration:
 
 ```java
 // src/main/java/com/example/demo/config/ObservabilityConfig.java
@@ -1024,10 +1022,11 @@ Spring Boot 3.2 之後，`@Observed` 所需的核心元件 `ObservedAspect` 已�
 public class ObservabilityConfig {
 
     /**
-     * 為了讓追蹤資訊能在 @Async 的非同步執行緒中也能正確傳遞，
-     * 我們需要配置一個 TaskExecutor。
-     * ContextPropagatingTaskDecorator 會自動將當前執行緒的追蹤上下文(如 traceId)，
-     * 複製到即將執行 @Async 任務的新執行緒中，確保追蹤鏈的完整性。
+     * To propagate tracing info in @Async threads,
+     * we need to configure a TaskExecutor.
+     * ContextPropagatingTaskDecorator automatically copies current thread's
+     * tracing context (like traceId) to the new thread executing @Async tasks,
+     * ensuring trace chain completeness.
      */
     @Bean
     public TaskExecutor taskExecutor() {
@@ -1038,11 +1037,11 @@ public class ObservabilityConfig {
 }
 ```
 
-**注意**：如果你的專案裡完全沒有用到 `@Async`，那你甚至可以不用建立 `ObservabilityConfig.java` 這個檔案。
+**Note**: If your project doesn't use `@Async` at all, you don't even need to create the `ObservabilityConfig.java` file.
 
-#### 步驟 4：在業務邏輯中應用註解
+#### Step 4: Apply Annotation in Business Logic
 
-在 `BookService` 中，我們使用了 `@Observed` 的進階功能，為監控加上了更有意義的業務名稱和自訂標籤。
+In `BookService`, we use advanced `@Observed` features to add meaningful business names and custom tags to monitoring.
 
 ```java
 // src/main/java/com/example/demo/applications/BookService.java
@@ -1052,21 +1051,21 @@ public class BookService {
     @Cacheable(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
     @Observed(
         name = "book.details.view",
-        contextualName = "書本詳情查看",
+        contextualName = "View Book Details",
         lowCardinalityKeyValues = {
             "operation", "get_by_id",
             "cache_enabled", "true"
         }
     )
     public Book getBookById(Integer id) {
-        //... 業務邏輯...
+        //... business logic...
     }
 
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.BOOKS_CACHE, key = "'book_' + #id")
     @Observed(
         name = "book.inventory.update",
-        contextualName = "書本資訊更新",
+        contextualName = "Update Book Info",
         lowCardinalityKeyValues = {
             "operation", "update",
             "cache_evict", "single",
@@ -1074,58 +1073,58 @@ public class BookService {
         }
     )
     public Book updateBook(Integer id, Book book) {
-        //... 業務邏輯...
+        //... business logic...
     }
 }
 ```
 
-`@Observed` 註解裡的參數說明：
+`@Observed` annotation parameters explained:
 
-- **`name`**: 指標的名稱 (`book.details.view`)。我們採用「領域.子域.動作」的命名風格，這在監控系統中更容易分類和篩選。
-- **`contextualName`**: 追蹤 Span 的名稱 (`書本詳情查看`)。我們直接用中文業務術語，這樣就算不是工程師，也能看懂追蹤圖表上每個步驟的意義。
-- **`lowCardinalityKeyValues`**: 這個功能非常實用。它讓我們可以為指標和追蹤加上自訂的 Key-Value 標籤 (Tags)。
-  - **什麼是低基數 (Low Cardinality)？** 「基數」指的是一個標籤可能出現的不同值的數量。「低基數」代表值的種類是有限且可預測的（例如 `operation` 的值只可能是 `create`, `update`, `delete` 這幾種）。我們應該只把低基數的標籤放在這裡。
-  - **千萬不要**把高基數的值（像是 `book_id`, `user_id`）放在這裡，這會導致監控系統的索引庫爆炸，產生效能問題。
-  - **如何使用**：用 `{ "key1", "value1", "key2", "value2" }` 的格式提供。
+- **`name`**: Metric name (`book.details.view`). We use "domain.subdomain.action" naming style for easier categorization and filtering in monitoring systems.
+- **`contextualName`**: Trace Span name (`View Book Details`). We use plain business terms so even non-engineers can understand what each step means in trace charts.
+- **`lowCardinalityKeyValues`**: Very useful feature. It lets us add custom Key-Value tags to metrics and traces.
+  - **What is Low Cardinality?** "Cardinality" refers to the number of different possible values a tag can have. "Low cardinality" means the values are limited and predictable (e.g., `operation` can only be `create`, `update`, `delete`). We should only put low cardinality tags here.
+  - **Never** put high cardinality values (like `book_id`, `user_id`) here - this causes monitoring system index explosion and performance problems.
+  - **How to use**: Provide in `{ "key1", "value1", "key2", "value2" }` format.
 
-### 進階追蹤：使用 Baggage 注入高基數業務內文 (選用)
+### Advanced Tracing: Using Baggage to Inject High Cardinality Business Context (Optional)
 
-我們剛剛提到，`lowCardinalityKeyValues` **不應該**被用來存放像 `book_id` 或 `user_id` 這類高基數的資料。那麼問題來了：如果我今天就是要追蹤一個特定 `book_id` 的完整請求鏈路，該怎麼做呢？
+We mentioned that `lowCardinalityKeyValues` **should not** store high cardinality data like `book_id` or `user_id`. So the question is: if I need to trace the complete request chain for a specific `book_id`, how do I do it?
 
-答案是使用 **Baggage**。
+The answer is using **Baggage**.
 
-Baggage 是 OpenTelemetry 中一個強大的概念，您可以把它想像成一個跟隨請求在系統中旅行的「隨身行李箱」。您可以在請求的入口點（例如 Controller）將一個業務 ID (如 `book-id: 123`) 放入這個行李箱，之後這個 ID 就會自動地在整個呼叫鏈中傳遞，甚至可以跨越多個微服務。
+Baggage is a powerful concept in OpenTelemetry. Think of it as a "carry-on luggage" that travels with requests through the system. You can put a business ID (like `book-id: 123`) into this luggage at the request entry point (e.g., Controller), and this ID will automatically propagate through the entire call chain, even across multiple microservices.
 
-這是一個選用但極為有用的技巧，能讓除錯和問題排查的效率提升一個量級。
+This is an optional but extremely useful technique that can improve debugging and troubleshooting efficiency by an order of magnitude.
 
-#### 步驟 1：在 `application.yml` 中設定 Baggage 欄位
+#### Step 1: Configure Baggage Fields in `application.yml`
 
-首先，我們需要明確告訴 Micrometer Tracing，我們想要追蹤哪些 Baggage 欄位。
+First, we need to explicitly tell Micrometer Tracing which Baggage fields we want to track.
 
 ```yaml
 # src/main/resources/application.yml
 management:
   tracing:
     baggage:
-      enabled: true # 確保 Baggage 功能已啟用
+      enabled: true # Ensure Baggage functionality is enabled
       remote-fields:
-        - book-id # 1. 遠端傳播：讓 'book-id' 可以透過 HTTP headers 在微服務間傳遞。
+        - book-id # 1. Remote propagation: Lets 'book-id' propagate between microservices via HTTP headers
       tag-fields:
-        - book-id # 2. 自動標籤：讓 Micrometer 自動將這個 Baggage 的值，作為一個 Tag 加到所有後續的 Span 上。這是能在 Grafana 看到它的關鍵。
+        - book-id # 2. Auto-tagging: Micrometer automatically adds this Baggage value as a Tag to all subsequent Spans. This is key to seeing it in Grafana
       correlation:
-        enabled: true # 3. 日誌關聯
+        enabled: true # 3. Log correlation
         fields:
-          - book-id # 4. 將 'book-id' 的值也放進日誌的 MDC 中，方便在日誌裡直接看到和搜尋。
+          - book-id # 4. Also put 'book-id' value into log MDC for easy viewing and searching in logs
 ```
 
-#### 步驟 2：在 Controller 中設定 Baggage 的值
+#### Step 2: Set Baggage Value in Controller
 
-設定好之後，我們需要在程式的入口點，也就是 `BookController` 中，注入 `Tracer` 並將傳入的 `id` 放入 Baggage。
+After configuration, we need to inject `Tracer` at the program entry point (`BookController`) and put the incoming `id` into Baggage.
 
 ```java
 // src/main/java/com/example/demo/interfaces/rest/BookController.java
 
-// ... 其他 import ...
+// ... other imports ...
 import io.micrometer.tracing.Baggage;
 import io.micrometer.tracing.Tracer;
 
@@ -1135,89 +1134,89 @@ public class BookController implements BooksApi {
 
     private final BookService bookService;
     private final BookMapper bookMapper;
-    private final Tracer tracer; // Spring Boot 會自動配置好 Tracer
+    private final Tracer tracer; // Spring Boot auto-configures Tracer
 
-    // ... 其他 API 方法 ...
+    // ... other API methods ...
 
     @Override
     public ResponseEntity<BookDto> booksIdGet(Integer id) throws Exception {
-        log.info("獲取書本，ID: {}", id);
-        // 在處理請求的開頭，將 ID 放入 Baggage
+        log.info("Getting book, ID: {}", id);
+        // Put ID into Baggage at the beginning of request processing
         this.setBookIdInBaggage(id);
         Book book = bookService.getBookById(id);
         return ResponseEntity.ok(bookMapper.toDto(book));
     }
 
-    // ... 其他需要 ID 的方法也做同樣的處理 ...
+    // ... other methods needing ID do the same ...
 
     /**
-     * 將書本 ID 設定到分散式追蹤的 Baggage 中。
-     * @param bookId 要設定的書本 ID
+     * Set book ID into distributed tracing Baggage.
+     * @param bookId The book ID to set
      */
     private void setBookIdInBaggage(Integer bookId) {
         if (bookId == null) {
             return;
         }
         try {
-            // 根據 application.yml 中設定的名稱 "book-id" 獲取 BaggageField 的句柄
+            // Get BaggageField handle using name "book-id" configured in application.yml
             Baggage baggage = tracer.getBaggage("book-id");
             if (baggage!= null) {
-                // 設定 Baggage 的值，這個值將在當前的追蹤上下文中生效
+                // Set Baggage value, effective in current tracing context
                 baggage.makeCurrent(bookId.toString());
-                log.info("Baggage 'book-id' 已設定為: {}", baggage.get());
+                log.info("Baggage 'book-id' set to: {}", baggage.get());
             } else {
-                log.warn("Baggage 欄位 'book-id' 未設定或未啟用。");
+                log.warn("Baggage field 'book-id' not configured or enabled.");
             }
         } catch (Exception e) {
-            log.error("設定 book-id 到 Baggage 時發生錯誤", e);
+            log.error("Error setting book-id to Baggage", e);
         }
     }
 }
 ```
 
-#### 步驟 3：在 Grafana Tempo 中驗證結果
+#### Step 3: Verify Results in Grafana Tempo
 
-完成設定並發送一個請求後（例如 `GET /books/2`），我們就可以在 Grafana Tempo 中看到驚人的效果。在追蹤的瀑布圖中，點開任何一個 Span，您會在下方的 `Span Attributes` 區塊中，清楚地看到我們剛剛設定的 `book-id` 標籤。
+After completing setup and sending a request (e.g., `GET /books/2`), we can see amazing results in Grafana Tempo. In the trace waterfall chart, click on any Span, and you'll clearly see the `book-id` tag we just set in the `Span Attributes` section below.
 
 ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query3.jpg)
 
-有了這個功能，當客服回報「ID 為 2 的書本頁面載入很慢」時，維運人員不再需要大海撈針。他們可以直接在 Tempo 中使用類似 `{ resource.service.name="demo", book-id="2" }` 的查詢，立刻就能篩選出所有與這本書相關的請求鏈路，從而精準地定位問題根源。
+With this feature, when customer service reports "Book page with ID 2 loads slowly", operations staff no longer need to search blindly. They can directly query in Tempo using something like `{ resource.service.name="demo", book-id="2" }` to immediately filter all request chains related to this book, precisely locating the problem source.
 
-### 從技術監控到業務洞察
+### From Technical Monitoring to Business Insights
 
-透過這種帶有業務語義的監控方式，我們的監控數據將不再只是冷冰冰的技術指標，而是能提供有價值的商業洞察。
+Through this business-semantic monitoring approach, our monitoring data is no longer just cold technical metrics but can provide valuable business insights.
 
-例如，我們現在可以直接在 Grafana 這樣的監控系統中，回答下面這些問題：
+For example, we can now directly answer these questions in monitoring systems like Grafana:
 
-- **分析顧客行為**:
-      - `getAllBooks` 被標記為 `book.catalog.browse`，我們可以統計「顧客瀏覽商品目錄的頻率有多高？」
-      - `getBookById` 被標記為 `book.details.view`，我們可以分析「顧客平均會點開幾本書的詳情頁？」
-- **評估庫存管理效率**:
-      - 透過篩選 `operation` 標籤 (`create`, `update`, `remove`)，我們可以建立儀表板，分別顯示「每日新書上架數量」、「資訊更新頻次」和「商品下架數量」。
-- **量化業務影響力**:
-      - 我們為不同操作定義了 `business_impact` 標籤（如 `high`, `medium`）。現在可以設定更聰明的警報，例如：「只有當 `business_impact` 為 `high` 的操作（如下架商品）錯誤率超過 1% 時，才發送緊急警報」，讓團隊能專注於真正重要的問題。
+- **Analyze Customer Behavior**:
+      - `getAllBooks` marked as `book.catalog.browse`, we can count "How often do customers browse the product catalog?"
+      - `getBookById` marked as `book.details.view`, we can analyze "How many book details do customers view on average?"
+- **Evaluate Inventory Management Efficiency**:
+      - By filtering `operation` tags (`create`, `update`, `remove`), we can create dashboards showing "Daily new books", "Update frequency", and "Product removals".
+- **Quantify Business Impact**:
+      - We defined `business_impact` tags for different operations (like `high`, `medium`). Now we can set smarter alerts, e.g., "Only send urgent alerts when operations with `business_impact` of `high` (like removing products) have error rates over 1%", letting teams focus on truly important issues.
 
-總之，`@Observed` 的這種用法，能讓監控數據對整個團隊（包括產品、營運和管理層）都產生價值。
+In summary, this use of `@Observed` makes monitoring data valuable for the entire team (including product, operations, and management).
 
 ---
 
-## 🔬 現代化可觀測性 (Observability) - 第二部分：與 OpenTelemetry 的協同運作
+## 🔬 Modern Observability - Part 2: Working with OpenTelemetry
 
-我們已經學會用 `@Observed` 為業務邏輯加上觀測能力。現在，我們來揭開神秘的面紗，看看背後這些技術套件是如何分工合作，最終將監控數據變成 OpenTelemetry 格式並傳送出去的。
+We've learned to use `@Observed` to add observability to business logic. Now let's unveil the mystery and see how these technology packages work together to convert monitoring data to OpenTelemetry format and send it out.
 
-### 整體架構圖
+### Overall Architecture Diagram
 
 ```mermaid
 graph TD
-    subgraph "執行環境"
-        User[👨‍💻 使用者]
+    subgraph "Runtime Environment"
+        User[👨‍💻 User]
         App
         DB
         Cache
     end
 
-    subgraph "otel-lgtm 內部"
-        Developer[👨‍💻 開發者]
+    subgraph "Inside otel-lgtm"
+        Developer[👨‍💻 Developer]
         Grafana[📊 Grafana]
         Tempo
         Mimir[📉 Mimir - Metrics]
@@ -1225,138 +1224,138 @@ graph TD
         Collector
     end
 
-    User -->|HTTP API 請求| App
+    User -->|HTTP API Request| App
     App -->|JDBC| DB
     App -->|Redis Commands| Cache
     App -->|OTLP - gRPC/HTTP| Collector
     Collector --> Tempo
     Collector --> Mimir
     Collector --> Loki
-    Grafana -->|查詢| Tempo
-    Grafana -->|查詢| Mimir
-    Grafana -->|查詢| Loki
-    Developer -->|瀏覽| Grafana
+    Grafana -->|Query| Tempo
+    Grafana -->|Query| Mimir
+    Grafana -->|Query| Loki
+    Developer -->|Browse| Grafana
 ```
 
-### 分層架構：解耦與協作
+### Layered Architecture: Decoupling and Collaboration
 
-要理解這些套件的關係，關鍵在於掌握 Spring Boot 3 的觀測性分層架構：
+To understand these package relationships, the key is grasping Spring Boot 3's observability layered architecture:
 
-1. **檢測層 (Instrumentation API)**：我們開發者互動的地方，主要就是用 `@Observed`。
-2. **門面層 (Facade API)**：由 Micrometer 提供。它定義了一套中立、標準的 API。
-3. **實現層 (Implementation)**：由 OpenTelemetry 擔任。它是實現 Micrometer API 背後的實際引擎。
-4. **匯出層 (Export)**：由各種 Exporter 組成，負責把監控數據打包成 OTLP 格式，然後傳送到後端系統。
+1. **Instrumentation Layer**: Where we developers interact, mainly using `@Observed`
+2. **Facade Layer**: Provided by Micrometer. It defines a neutral, standard API
+3. **Implementation Layer**: Handled by OpenTelemetry. It's the actual engine behind Micrometer API
+4. **Export Layer**: Composed of various Exporters, responsible for packaging monitoring data into OTLP format and sending to backend systems
 
-### 關鍵套件的職責與數據流
+### Key Package Responsibilities and Data Flow
 
-下圖清楚地展示了，當一個帶有 `@Observed` 的方法被呼叫時，指標 (Metrics)、追蹤 (Traces) 和日誌 (Logs) 是如何經過不同的路徑進行處理的。
+The diagram below clearly shows how metrics, traces, and logs are processed through different paths when a method with `@Observed` is called.
 
 ```mermaid
 graph TD
-    subgraph APP["應用程式內部"]
-        A["業務方法<br/>執行 log.info"] -->|"@Observed"| B["Micrometer Observation<br/>統一門面 API"]
+    subgraph APP["Inside Application"]
+        A["Business Method<br/>executes log.info"] -->|"@Observed"| B["Micrometer Observation<br/>Unified Facade API"]
 
-        subgraph TRACES["追蹤數據流"]
-            B -.->|"創建 Span"| C_T["micrometer-tracing<br/>核心追蹤 API"]
-            C_T --> D_T["micrometer-tracing-bridge-otel<br/>橋接到 OTel"]
-            D_T --> F_T["OpenTelemetry SDK<br/>遙測數據處理核心"]
+        subgraph TRACES["Trace Data Flow"]
+            B -.->|"Create Span"| C_T["micrometer-tracing<br/>Core Tracing API"]
+            C_T --> D_T["micrometer-tracing-bridge-otel<br/>Bridge to OTel"]
+            D_T --> F_T["OpenTelemetry SDK<br/>Telemetry Data Processing Core"]
         end
 
-        subgraph LOGS["日誌數據流"]
-            F_T -.->|"TraceId & SpanId 注入 MDC"| H_L["日誌框架<br/>SLF4J + Logback + MDC"]
-            A -->|"log.info 寫入日誌"| H_L
-            H_L -->|"Logback Appender 攔截"| I_L["opentelemetry-spring-boot-starter<br/>含 Logback 整合"]
-            I_L -->|"轉換為 OTLP LogRecord"| F_T
+        subgraph LOGS["Log Data Flow"]
+            F_T -.->|"TraceId & SpanId inject to MDC"| H_L["Logging Framework<br/>SLF4J + Logback + MDC"]
+            A -->|"log.info writes log"| H_L
+            H_L -->|"Logback Appender intercepts"| I_L["opentelemetry-spring-boot-starter<br/>includes Logback integration"]
+            I_L -->|"Convert to OTLP LogRecord"| F_T
         end
 
-        subgraph METRICS["指標數據流"]
-            B -.->|"自動生成計時器與計數器"| C_M["micrometer-core<br/>指標收集核心"]
-            C_M --> D_M1["micrometer-registry-otlp<br/>指標 OTLP 匯出器"]
-            C_M --> D_M2["micrometer-registry-prometheus<br/>Prometheus 端點匯出"]
+        subgraph METRICS["Metrics Data Flow"]
+            B -.->|"Auto-generate timers & counters"| C_M["micrometer-core<br/>Metrics Collection Core"]
+            C_M --> D_M1["micrometer-registry-otlp<br/>Metrics OTLP Exporter"]
+            C_M --> D_M2["micrometer-registry-prometheus<br/>Prometheus Endpoint Export"]
         end
 
-        subgraph EXPORT["數據匯出層"]
-            F_T --> G_T["opentelemetry-exporter-otlp<br/>統一 OTLP 匯出器"]
+        subgraph EXPORT["Data Export Layer"]
+            F_T --> G_T["opentelemetry-exporter-otlp<br/>Unified OTLP Exporter"]
         end
     end
 
-    subgraph BACKEND["外部監控後端"]
+    subgraph BACKEND["External Monitoring Backend"]
         L["Grafana LGTM Stack<br/>Loki + Grafana + Tempo + Mimir"]
-        P["Prometheus<br/>可選拉取模式"]
+        P["Prometheus<br/>Optional Pull Mode"]
     end
 
     G_T -->|"Traces & Logs via OTLP"| L
     D_M1 -->|"Metrics via OTLP"| L
     D_M2 -.->|"Prometheus Pull"| P
-    P -.->|"聯邦或遠端讀取"| L
+    P -.->|"Federation or Remote Read"| L
 ```
 
-| 套件 (Dependency)                                                        | 定位 | 功能說明 |
+| Package (Dependency)                                                     | Purpose | Description |
 | ------------------------------------------------------------------------ | :--- | :--- |
-| **`spring-boot-starter-actuator`** | 框架基礎 | 可觀測性的基石。它引入了 Micrometer，並提供了 `/actuator` 系列端點。 |
-| **`spring-boot-starter-aop`** | `@Observed` 的動力 | 提供 AOP 技術，讓 `@Observed` 註解可以被攔截並自動加上監控邏輯。 |
-| **`io.micrometer:micrometer-tracing-bridge-otel`** | API 橋接器 | 擔任翻譯官，把 Micrometer 的追蹤指令，轉譯成 OpenTelemetry 能聽懂的指令。 |
-| **`io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter`** | 自動設定套件 | 大大簡化了整合，在幕後自動完成 OpenTelemetry 的初始化和設定。 |
-| **`io.opentelemetry:opentelemetry-exporter-otlp`** | 追蹤 & 日誌匯出器 | 負責把產生的追蹤和日誌數據，打包成 OTLP 格式並透過網路傳送出去。 |
-| **`micrometer-registry-otlp`** | 指標匯出器 | 職責很明確：把 Micrometer 收集到的指標數據，轉換成 OTLP 格式並推送到後端。 |
-| **`micrometer-registry-prometheus`** | 指標本地端點 | 提供另一種查看指標的方式。它會在 `/actuator/prometheus` 開一個 HTTP 端點，方便開發和除錯時直接查看指標數據。 |
+| **`spring-boot-starter-actuator`** | Framework Foundation | Cornerstone of observability. It brings in Micrometer and provides `/actuator` endpoints. |
+| **`spring-boot-starter-aop`** | Powers `@Observed` | Provides AOP technology that lets `@Observed` annotation be intercepted and automatically add monitoring logic. |
+| **`io.micrometer:micrometer-tracing-bridge-otel`** | API Bridge | Acts as translator, converting Micrometer tracing commands into OpenTelemetry-understandable commands. |
+| **`io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter`** | Auto-configuration Package | Greatly simplifies integration, automatically completes OpenTelemetry initialization and setup behind the scenes. |
+| **`io.opentelemetry:opentelemetry-exporter-otlp`** | Trace & Log Exporter | Responsible for packaging generated traces and logs into OTLP format and sending over network. |
+| **`micrometer-registry-otlp`** | Metrics Exporter | Clear responsibility: converts Micrometer-collected metrics to OTLP format and pushes to backend. |
+| **`micrometer-registry-prometheus`** | Metrics Local Endpoint | Provides another way to view metrics. It opens an HTTP endpoint at `/actuator/prometheus`, convenient for direct metric viewing during development and debugging. |
 
-簡單來說，我們的應用程式透過統一的 Micrometer API (`@Observed`) 進行監控，由 OpenTelemetry 在幕後實現追蹤，再由各司其職的匯出器，將數據以 OTLP 格式發送到後端。而這一切複雜的組裝工作，都由 Spring Boot 自動化完成，構成了一個分工清晰、容易維護的觀測體系。
+Simply put, our application monitors through unified Micrometer API (`@Observed`), implemented by OpenTelemetry behind the scenes, with specialized exporters sending data in OTLP format to the backend. All this complex assembly work is automated by Spring Boot, creating a clear, maintainable observability system.
 
-### 運行時視圖 (Runtime View)
+### Runtime View
 
-#### 一次 API 請求的旅程
+#### Journey of an API Request
 
-讓我們看看當一個「新增書本」的請求 (`POST /books`) 進來時，系統內部發生了什麼事。
+Let's see what happens internally when an "add book" request (`POST /books`) comes in.
 
 ```mermaid
 sequenceDiagram
-    participant Client as 👨‍💻 API 客戶端
-    participant App as 🚀 Demo 應用程式
+    participant Client as 👨‍💻 API Client
+    participant App as 🚀 Demo Application
     participant SVC as 📖 BookService
     participant DB as 🐘 PostgreSQL
     participant Cache as ⚡ Redis
     participant LGTM as 📈 otel-lgtm
 
     Client ->> App: POST /books (Request)
-    Note over App: Spring MVC 收到請求，自動產生一筆 Trace
+    Note over App: Spring MVC receives request, auto-generates a Trace
 
     App ->> SVC: createBook(book)
-    Note over SVC: @Observed 註解生效，建立一個新的 Span
+    Note over SVC: @Observed annotation takes effect, creates new Span
 
-    SVC ->> DB: 檢查 ISBN 是否存在
-    SVC ->> DB: 儲存新書本
-    Note over SVC,DB: JPA 會自動為資料庫操作產生對應的 Span
+    SVC ->> DB: Check if ISBN exists
+    SVC ->> DB: Save new book
+    Note over SVC,DB: JPA automatically generates Spans for database operations
 
-    SVC ->> Cache: @CacheEvict 清除快取
-    Note over Cache: Redis 操作也會被自動產生 Span
+    SVC ->> Cache: @CacheEvict clears cache
+    Note over Cache: Redis operations also auto-generate Spans
 
-    SVC -->> App: 回傳新增的書本
+    SVC -->> App: Return created book
     App -->> Client: 201 Created (Response)
 
-    Note over App,LGTM: 在整個過程中，<br/>應用程式會持續將 Logs, Traces, Metrics<br/>透過 OTLP 格式傳送到 otel-lgtm 監控後端
+    Note over App,LGTM: Throughout the process,<br/>application continuously sends Logs, Traces, Metrics<br/>to otel-lgtm monitoring backend via OTLP format
 ```
 
 ---
 
-## 🔬 現代化可觀測性 (Observability) - 第三部分：在 Grafana 中探索遙測數據
+## 🔬 Modern Observability - Part 3: Exploring Telemetry Data in Grafana
 
-現在，最激動人心的部分來了：實際看到我們辛苦設定後收集到的遙測數據。打開瀏覽器，訪問 `http://localhost:3000` 即可進入 Grafana 的儀表板。
+Now comes the most exciting part: actually seeing the telemetry data we've worked hard to collect. Open your browser and visit `http://localhost:3000` to enter Grafana's dashboard.
 
-### Grafana 導覽與數據源
+### Grafana Navigation and Data Sources
 
-在 Grafana 的左側導航欄中，點擊「Explore」（指南針圖標）。在頁面頂部的下拉菜單中，您會看到 `otel-lgtm` 這個 Docker 映像檔已經為我們預先配置好了三個核心數據源，對應可觀測性的三大支柱：
+In Grafana's left navigation bar, click "Explore" (compass icon). In the dropdown menu at the top of the page, you'll see that the `otel-lgtm` Docker image has pre-configured three core data sources for us, corresponding to the three pillars of observability:
 
-- **`mimir`**: 用於查詢**指標 (Metrics)**。
-- **`loki`**: 用於查詢**日誌 (Logs)**。
-- **`tempo`**: 用於查詢**追蹤 (Traces)**。
+- **`mimir`**: For querying **Metrics**
+- **`loki`**: For querying **Logs**
+- **`tempo`**: For querying **Traces**
 
-### 追蹤 (Traces) 的藝術：使用 Tempo 和 TraceQL
+### The Art of Tracing: Using Tempo and TraceQL
 
-在 Grafana 的 Explore 頁面，選擇 `tempo` 數據源。我們可以使用 TraceQL 語言來查詢追蹤。
+On Grafana's Explore page, select the `tempo` data source. We can use TraceQL language to query traces.
 
-1. **按服務名稱查詢**:
-    在 `application.yml` 中，我們定義了 `spring.application.name: demo`。這個名稱會被 OpenTelemetry 當作 `service.name`。因此，最常用的查詢就是篩選出所有來自我們應用程式的追蹤。
+1. **Query by Service Name**:
+    In `application.yml`, we defined `spring.application.name: demo`. This name becomes `service.name` in OpenTelemetry. Therefore, the most common query is filtering all traces from our application.
 
     ```text
     {resource.service.name="demo"}
@@ -1364,86 +1363,86 @@ sequenceDiagram
 
     ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query1.jpg)
 
-2. **按自訂的 Span 名稱查詢**:
-    我們在 `BookService` 中用 `@Observed(contextualName = "書本詳情查看")` 為方法加上了有意義的名稱。這個名稱會變成 Span 的名字。這可以讓我們精確地找到特定業務邏輯的追蹤。
+2. **Query by Custom Span Name**:
+    We used `@Observed(contextualName = "View Book Details")` in `BookService` to give methods meaningful names. This name becomes the Span name, letting us precisely find traces of specific business logic.
 
     ```text
-    {name="書本詳情查看"}
+    {name="View Book Details"}
     ```
 
     ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query2.jpg)
 
-3. **分析追蹤視圖 (Waterfall View)**:
-    點擊任意一個查詢結果，您會看到一個瀑布圖。
-    - **快取未命中 (Cache Miss)**：當您第一次查詢某本書的詳情時，會看到一個層級分明的結構：頂層是 `GET /books/{id}`，其下是 `書本詳情查看`，再下面還會有 `SELECT` 資料庫查詢的 Span。每個 Span 的耗時都清晰可見。
-    - **快取命中 (Cache Hit)**：當您再次查詢同一本書時，會發現 `SELECT` 這個 Span 消失了，並且整個追蹤的總耗時顯著縮短。這就是快取發揮作用的直接證明。
+3. **Analyze Trace View (Waterfall View)**:
+    Click any query result to see a waterfall chart.
+    - **Cache Miss**: When you first query a book's details, you'll see a hierarchical structure: top level is `GET /books/{id}`, below is `View Book Details`, and further below are `SELECT` database query Spans. Each Span's duration is clearly visible.
+    - **Cache Hit**: When you query the same book again, the `SELECT` Span disappears and total trace duration significantly shortens. This directly proves cache effectiveness.
 
-### 指標 (Metrics) 的力量：使用 Mimir 和 PromQL
+### The Power of Metrics: Using Mimir and PromQL
 
-在新版本中，儘管底層儲存指標的技術是 Mimir，但它提供的是與 Prometheus 完全相容的查詢端點。因此，數據源被直接命名為 `prometheus`，讓使用者可以專注於使用標準的 PromQL (Prometheus Query Language) 進行查詢，這也是業界最廣泛使用的指標查詢語言。
+In the new version, although the underlying metric storage technology is Mimir, it provides a fully Prometheus-compatible query endpoint. Therefore, the data source is directly named `prometheus`, letting users focus on using standard PromQL (Prometheus Query Language) for queries - the most widely used metric query language in the industry.
 
-#### OTLP 到 Prometheus 的名稱轉換
+#### OTLP to Prometheus Name Conversion
 
-理解一個關鍵的轉換規則至關重要：Micrometer 產生的指標名稱，在透過 OTLP 匯出到 Mimir/Prometheus 時，格式會被轉換。
+Understanding a key conversion rule is crucial: Micrometer-generated metric names are converted when exported to Mimir/Prometheus via OTLP.
 
-- 指標名稱中的點 `.` 會被轉換為下劃線 `_`。
-- `service.name` (`demo`) 這個資源屬性會被映射為 `job` 標籤。
-- 計時器 (`@Observed` 或 HTTP 請求) 會自動產生以 `_milliseconds` 為單位，並帶有 `_count` (計數), `_sum` (總和), `_bucket` (直方圖分桶) 等後綴的指標。這是由於較新版本的 Micrometer 為了提高精確度，預設使用毫秒作為時間單位。
+- Dots `.` in metric names are converted to underscores `_`
+- The `service.name` (`demo`) resource attribute is mapped to the `job` label
+- Timers (`@Observed` or HTTP requests) automatically generate metrics in `_milliseconds` units with suffixes like `_count`, `_sum`, `_bucket` (histogram buckets). This is because newer Micrometer versions default to milliseconds for higher precision.
 
-| 原始名稱 (`@Observed` name) | 轉換後的 PromQL 指標 (範例) |
+| Original Name (`@Observed` name) | Converted PromQL Metric (example) |
 | :--- | :--- |
 | `book.details.view` | `book_details_view_milliseconds_count`, `book_details_view_milliseconds_sum` |
 | HTTP Server Requests | `http_server_requests_milliseconds_count` |
 
-#### 實用 PromQL 查詢
+#### Useful PromQL Queries
 
-1. **查詢 API 每秒請求數 (RPS)**:
+1. **Query API Requests Per Second (RPS)**:
 
     ```promql
     rate(http_server_requests_milliseconds_count{job="demo"}[5m])
     ```
 
-    這個查詢計算了在過去 5 分鐘窗口內，`demo` 服務每秒的平均請求數。
+    This query calculates the average requests per second for the `demo` service over the past 5-minute window.
 
     ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/prometheus_query1.jpg)
 
-2. **查詢「查看書本詳情」操作的 P95 延遲 (單位：毫秒)**:
+2. **Query "View Book Details" P95 Latency (in milliseconds)**:
 
     ```promql
     histogram_quantile(0.95, sum(rate(book_details_view_milliseconds_bucket{job="demo"}[5m])) by (le))
     ```
 
-    這是一個更高級的查詢，它利用直方圖 (`_bucket`) 數據，計算出 95% 的「查看書本詳情」操作的延遲時間，結果以毫秒為單位。
+    This is an advanced query using histogram (`_bucket`) data to calculate the 95th percentile latency for "View Book Details" operations in milliseconds.
 
-3. **利用自訂標籤分析**:
-    我們在 `@Observed` 中定義了 `lowCardinalityKeyValues`。例如 `operation="get_by_id"`。這個標籤可以用來做更精細的分析。
+3. **Analyze with Custom Tags**:
+    We defined `lowCardinalityKeyValues` in `@Observed`, like `operation="get_by_id"`. This tag enables more detailed analysis.
 
     ```promql
-    // 計算所有 "get_by_id" 操作在過去5分鐘內的總次數
+    // Calculate total count of all "get_by_id" operations in the past 5 minutes
     sum(increase(book_details_view_milliseconds_count{job="demo", operation="get_by_id"}[5m]))
     ```
 
-#### Exemplars 的魔法
+#### The Magic of Exemplars
 
-在 Grafana 的圖表面板中，如果您看到數據點旁邊有一個彩色的鑽石圖標，這就是一個 **Exemplar**。它是一個與該時間點的指標數據相關聯的**具體追蹤樣本**。當您看到延遲圖表上出現一個尖峰時，可以直接點擊那個尖峰上的鑽石圖標，Grafana 會立刻帶您跳轉到**導致這個延遲尖峰的那個請求的完整追蹤視圖**。這個功能極大地縮短了從「發現問題」到「定位問題」的路徑。
+In Grafana's chart panels, if you see a colored diamond icon next to a data point, that's an **Exemplar**. It's a **specific trace sample** associated with that time point's metric data. When you see a spike in the latency chart, you can click the diamond icon on that spike, and Grafana will immediately take you to **the complete trace view of the request that caused this latency spike**. This feature dramatically shortens the path from "finding problems" to "locating problems".
 
-### 日誌 (Logs) 的關聯：使用 Loki 和 LogQL
+### Log Correlation: Using Loki and LogQL
 
-最後，選擇 `loki` 數據源。我們使用 LogQL 來查詢日誌。
+Finally, select the `loki` data source. We use LogQL to query logs.
 
-要讓日誌能夠被後端的 `otel-lgtm` 成功收集與解析，前提是需要**啟用 Spring Boot 的檔案日誌功能，並將其格式設定為 `logstash` JSON**。這能確保所有寫入檔案的日誌都具備 Loki 喜愛的結構化格式。您可以透過在 `application.yml` 中加入類似以下的設定來達成：
+To enable logs to be successfully collected and parsed by the backend `otel-lgtm`, you need to **enable Spring Boot's file logging and set its format to `logstash` JSON**. This ensures all file-written logs have the structured format that Loki loves. You can achieve this by adding configuration like this in `application.yml`:
 
 ```yaml
 logging:
   structured:
     format:
-      file: logstash     # 將檔案日誌的格式設為 logstash (JSON)
+      file: logstash     # Set file log format to logstash (JSON)
 ```
 
-設定完成後，得益於 OpenTelemetry 的自動整合，`trace_id` 和 `span_id` 等關鍵追蹤資訊會被自動加入到 JSON 日誌中，這使得日誌與追蹤的關聯無比強大。
+After configuration, thanks to OpenTelemetry's automatic integration, key tracing information like `trace_id` and `span_id` is automatically added to JSON logs, making log-trace correlation incredibly powerful.
 
-1. **查詢應用的所有日誌**:
-    在 `application.yml` 中定義的 `spring.application.name` 會被自動映射為 Loki 中的 `service_name` 標籤。這是篩選特定應用日誌最直接的方法。
+1. **Query All Application Logs**:
+    The `spring.application.name` defined in `application.yml` is automatically mapped to the `service_name` label in Loki. This is the most direct way to filter specific application logs.
 
     ```logql
     {service_name="demo"}
@@ -1451,36 +1450,36 @@ logging:
 
     ![image](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/loki_query1.jpg)
 
-2. **從追蹤跳轉到日誌 (Trace to Logs)**:
-    這是最常用的功能。由於 `trace_id` 已經包含在我們輸出的 JSON 日誌中，`otel-lgtm` 中的日誌代理會智能地將其提取為可供索引的標籤。因此，在 Tempo 的追蹤瀑布圖中，點擊任一個 Span，再點擊「Logs for this span」按鈕，Grafana 依然可以精準地為您篩選出所有相關的日誌。
+2. **Trace to Logs**:
+    This is the most commonly used feature. Since `trace_id` is already included in our JSON logs, the log agent in `otel-lgtm` intelligently extracts it as an indexable label. Therefore, in Tempo's trace waterfall chart, click any Span, then click the "Logs for this span" button, and Grafana can still precisely filter all related logs.
 
-3. **手動通過 Trace ID 查詢日誌**:
-    您也可以從 Tempo 複製一個 `trace_id`，然後在 Loki 中直接使用這個標籤來查詢，這比解析全文更高效。
+3. **Manually Query Logs by Trace ID**:
+    You can also copy a `trace_id` from Tempo and directly use this label to query in Loki, which is more efficient than parsing full text.
 
     ```logql
-    {service_name="demo", trace_id="複製過來的_trace_id"}
+    {service_name="demo", trace_id="copied_trace_id"}
     ```
 
-    如果您還想進一步處理日誌的 JSON 內容（例如，只顯示 `message` 欄位），可以加上 `json` 和 `line_format` 過濾器：
+    If you want to further process log JSON content (e.g., only show the `message` field), you can add `json` and `line_format` filters:
 
     ```logql
-    {service_name="demo", trace_id="複製過來的_trace_id"} | json | line_format "{{.message}}"
+    {service_name="demo", trace_id="copied_trace_id"} | json | line_format "{{.message}}"
     ```
 
 ---
 
-## 🔬 現代化可觀測性 (Observability) - 第四部分：全棧追蹤與 Grafana Faro 整合 (選用)
+## 🔬 Modern Observability - Part 4: Full-Stack Tracing with Grafana Faro Integration (Optional)
 
-在現代化的 Web 應用中，僅僅監控後端服務是不夠的。完整的可觀測性需要涵蓋從用戶瀏覽器到後端資料庫的全鏈路追蹤。本專案展示了如何使用 **Grafana Faro** 實現前端可觀測性，並與後端 OpenTelemetry 追蹤無縫整合。
+In modern web applications, monitoring only backend services isn't enough. Complete observability needs to cover the full chain from user browser to backend database. This project demonstrates how to use **Grafana Faro** for frontend observability and seamlessly integrate with backend OpenTelemetry tracing.
 
-### Grafana Faro 整合實現
+### Grafana Faro Integration Implementation
 
-#### 前端追蹤配置 (`src/main/resources/static/index.html`)
+#### Frontend Tracing Configuration (`src/main/resources/static/index.html`)
 
-我們在前端頁面中整合了 Grafana Faro，實現了完整的前端可觀測性：
+We've integrated Grafana Faro in the frontend page for complete frontend observability:
 
 ```html
-<!-- 載入 Grafana Faro 相關 CDN 套件 -->
+<!-- Load Grafana Faro CDN packages -->
 <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-sdk@^1/dist/bundle/faro-web-sdk.iife.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-web-tracing@^1/dist/bundle/faro-web-tracing.iife.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@grafana/faro-transport-otlp-http@^1/dist/bundle/faro-transport-otlp-http.iife.js"></script>
@@ -1492,27 +1491,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const { OtlpHttpTransport } = window.GrafanaFaroTransportOtlpHttp;
 
     const faro = initializeFaro({
-        // 應用程式標識
+        // Application identification
         app: {
             name: 'my-app-frontend',
             version: '1.0.0',
             environment: 'development'
         },
 
-        // 明確設置 OpenTelemetry resource 屬性
+        // Explicitly set OpenTelemetry resource attributes
         otelResourceAttributes: {
             'service.name': 'my-app-frontend',
             'service.version': '1.0.0',
             'deployment.environment': 'development'
         },
 
-        // 自動檢測配置
+        // Auto-instrumentation configuration
         instrumentations: [
-            ...getWebInstrumentations(),      // 基本 Web 檢測器
-            new TracingInstrumentation()      // 追蹤檢測器（自動為 fetch 注入 traceparent）
+            ...getWebInstrumentations(),      // Basic Web instrumentations
+            new TracingInstrumentation()      // Tracing instrumentation (auto-injects traceparent to fetch)
         ],
 
-        // OTLP 傳輸器配置
+        // OTLP transport configuration
         transports: [
             new OtlpHttpTransport({
                 tracesURL: 'http://localhost:4318/v1/traces',
@@ -1525,38 +1524,38 @@ document.addEventListener('DOMContentLoaded', () => {
         debug: true,
     });
 
-    // 測試發送初始事件
+    // Test sending initial event
     faro.api.pushEvent('page_loaded', { timestamp: Date.now() });
 });
 </script>
 ```
 
-#### 自動前後端追蹤關聯
+#### Automatic Frontend-Backend Trace Correlation
 
-當用戶點擊「Get Books」按鈕時，Faro 的 `TracingInstrumentation` 會自動：
+When a user clicks the "Get Books" button, Faro's `TracingInstrumentation` automatically:
 
-1. **創建前端 Span**：記錄用戶操作和 API 請求
-2. **注入 traceparent 標頭**：在 `fetch('/books')` 請求中自動添加追蹤上下文
-3. **關聯後端追蹤**：Spring Boot 接收到 traceparent 標頭，建立關聯的後端 Span
+1. **Creates Frontend Span**: Records user action and API request
+2. **Injects traceparent Header**: Automatically adds tracing context to `fetch('/books')` request
+3. **Correlates Backend Trace**: Spring Boot receives the traceparent header and creates correlated backend Span
 
 ```javascript
-// 實際的事件處理邏輯
+// Actual event handling logic
 getBooksButton.addEventListener('click', () => {
-    // 手動發送自訂事件
+    // Manually send custom event
     if (window.faro && window.faro.api) {
         window.faro.api.pushEvent('button_clicked', { action: 'get_books' });
     }
     
-    // Fetch API 會被 TracingInstrumentation 自動追蹤
+    // Fetch API is automatically traced by TracingInstrumentation
     fetch('/books')
       .then(response => {
-          // 處理回應...
+          // Handle response...
           if (window.faro && window.faro.api) {
               window.faro.api.pushEvent('books_fetched', { count: data.length });
           }
       })
       .catch(error => {
-          // 自動錯誤追蹤
+          // Automatic error tracking
           if (window.faro && window.faro.api) {
               window.faro.api.pushError(error);
           }
@@ -1564,89 +1563,89 @@ getBooksButton.addEventListener('click', () => {
 });
 ```
 
-### 全棧追蹤在 Tempo 中的效果
+### Full-Stack Trace Effect in Tempo
 
-整合 Grafana Faro 後，您可以在 Tempo 中看到完整的前後端追蹤鏈路：
+After integrating Grafana Faro, you can see complete frontend-backend trace chains in Tempo:
 
-![Tempo 全棧追蹤查詢](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query4.jpg)
+![Tempo Full-Stack Trace Query](https://raw.githubusercontent.com/samzhu/demo-springboot-250613/refs/heads/main/dev-resources/images/tempo_query4.jpg)
 
-如圖所示，現在可以在 Tempo 中查詢到：
+As shown, you can now query in Tempo:
 
-- **前端服務** (`my-app-frontend`)：用戶互動、頁面載入、API 請求
-- **後端服務** (`demo`)：API 處理、業務邏輯、資料庫操作
-- **完整鏈路**：從用戶點擊到資料庫查詢的端到端追蹤
+- **Frontend Service** (`my-app-frontend`): User interactions, page loads, API requests
+- **Backend Service** (`demo`): API processing, business logic, database operations
+- **Complete Chain**: End-to-end tracing from user click to database query
 
-### 實用的全棧追蹤查詢
+### Useful Full-Stack Trace Queries
 
-#### 1. 查詢前端追蹤
+#### 1. Query Frontend Traces
 
 ```traceql
 {resource.service.name="my-app-frontend"}
 ```
 
-#### 2. 查詢後端追蹤
+#### 2. Query Backend Traces
 
 ```traceql
 {resource.service.name="demo"}
 ```
 
-#### 3. 查詢完整的前後端鏈路
+#### 3. Query Complete Frontend-Backend Chains
 
 ```traceql
 {resource.service.name="my-app-frontend" || resource.service.name="demo"}
 ```
 
-#### 4. 分析跨服務效能
+#### 4. Analyze Cross-Service Performance
 
 ```traceql
 {(resource.service.name="my-app-frontend" || resource.service.name="demo") && duration>1s}
 ```
 
-#### 5. 追蹤特定業務操作
+#### 5. Trace Specific Business Operations
 
 ```traceql
-{resource.service.name="demo" && name="書本詳情查看"}
+{resource.service.name="demo" && name="View Book Details"}
 ```
 
-### Faro 整合的優勢
+### Faro Integration Advantages
 
-1. **零配置自動關聯**：前後端追蹤通過 `traceparent` 標頭自動關聯
-2. **完整用戶體驗**：從瀏覽器點擊到資料庫查詢的完整視圖
-3. **統一監控平台**：前後端數據都匯聚到同一個 Grafana/Tempo 平台
-4. **豐富的上下文**：結合前端用戶行為和後端業務邏輯的完整上下文
+1. **Zero-Config Auto-Correlation**: Frontend and backend traces automatically correlate via `traceparent` header
+2. **Complete User Experience**: Full view from browser click to database query
+3. **Unified Monitoring Platform**: Frontend and backend data converge to the same Grafana/Tempo platform
+4. **Rich Context**: Complete context combining frontend user behavior and backend business logic
 
-### 實際應用場景
+### Real-World Application Scenarios
 
-- **用戶體驗分析**：分析從用戶點擊到頁面更新的完整時間線
-- **效能瓶頸定位**：快速判斷慢請求是前端問題還是後端問題  
-- **錯誤根因分析**：追蹤錯誤從前端傳播到後端的完整鏈路
-- **業務流程監控**：監控關鍵業務流程在前後端的執行情況
+- **User Experience Analysis**: Analyze complete timeline from user click to page update
+- **Performance Bottleneck Location**: Quickly determine if slow requests are frontend or backend issues
+- **Error Root Cause Analysis**: Trace complete error propagation chain from frontend to backend
+- **Business Process Monitoring**: Monitor critical business process execution across frontend and backend
 
-通過 Grafana Faro 的整合，我們實現了真正的全棧可觀測性，為現代化 Web 應用提供了完整的監控解決方案。
-
----
-
-## 環境與組態設定
-
-### 容器化環境 (`compose.yaml`)
-
-我們使用 Docker Compose 來一鍵啟動所有需要的外部服務，包括 `postgres` (資料庫)、`redis` (快取) 和 `otel-lgtm` (監控後端)。這讓任何開發者都能快速在自己電腦上，建立起一個完整的開發與測試環境。
-
-### 應用程式組態 (`application.yml`)
-
-這是專案的控制中心，定義了應用程式的各種行為。讀到這裡，你應該更能理解每一項設定，是如何對應到前面章節討論到的技術：
-
-- **`spring.application.name: demo`**: 非常重要。這個名字會變成 OpenTelemetry 裡的 `service.name`，是你在 Grafana 上篩選服務的依據。
-- **`spring.threads.virtual.enabled: true`**: 啟用 Java 21 的虛擬執行緒，提升應用吞吐量。詳見 🚀 效能提升 章節。
-- **`management.observations.annotations.enabled: true`**: 啟用 `@Observed` 註解的總開關。詳見 🔬 可觀測性 章節。
-- **`management.opentelemetry.resource-attributes`**: 為所有送出去的監控數據，都貼上額外的標籤，例如服務版本和部署環境，方便在後端分類篩選。
-- **`management.tracing.sampling.probability: 1.0`**: 採樣率設定為 `1.0` (也就是 100%)。這在開發和測試時很有用，能確保每個請求的追蹤都被記錄下來。在正式環境，為了效能和成本考量，通常會設一個比較低的值 (例如 `0.1`)。
-- **`management.otlp.*.endpoint`**: 明確指定要把指標 (Metrics)、追蹤 (Traces)、日誌 (Logs) 送到哪裡。這裡我們都指向 `otel-lgtm` 容器的 4318 連接埠。
-- **`spring.jpa.hibernate.ddl-auto`** (沒有設定為 `update` 或 `create`)：我們把資料庫結構的管理權完全交給了 Liquibase，確保版本控制的嚴謹性。
+Through Grafana Faro integration, we achieve true full-stack observability, providing a complete monitoring solution for modern web applications.
 
 ---
 
-## 監控
+## Environment and Configuration
+
+### Containerized Environment (`compose.yaml`)
+
+We use Docker Compose to start all required external services with one click, including `postgres` (database), `redis` (cache), and `otel-lgtm` (monitoring backend). This lets any developer quickly set up a complete development and testing environment on their machine.
+
+### Application Configuration (`application.yml`)
+
+This is the project's control center, defining various application behaviors. By now, you should better understand how each setting corresponds to the technologies discussed in previous sections:
+
+- **`spring.application.name: demo`**: Very important. This name becomes `service.name` in OpenTelemetry, your basis for filtering services in Grafana.
+- **`spring.threads.virtual.enabled: true`**: Enable Java 21 virtual threads for improved throughput. See 🚀 Performance Boost section.
+- **`management.observations.annotations.enabled: true`**: Master switch for `@Observed` annotations. See 🔬 Observability section.
+- **`management.opentelemetry.resource-attributes`**: Adds extra tags to all outgoing monitoring data, like service version and deployment environment, for easier backend filtering.
+- **`management.tracing.sampling.probability: 1.0`**: Sampling rate set to `1.0` (100%). Useful for development and testing to ensure every request trace is recorded. In production, usually set lower (e.g., `0.1`) for performance and cost considerations.
+- **`management.otlp.*.endpoint`**: Explicitly specifies where to send Metrics, Traces, and Logs. Here we point to `otel-lgtm` container's port 4318.
+- **`spring.jpa.hibernate.ddl-auto`** (not set to `update` or `create`): We give database structure management completely to Liquibase for rigorous version control.
+
+---
+
+## Monitoring
 
 ```bash
 curl -X GET http://localhost:8080/actuator/health
@@ -1662,7 +1661,7 @@ curl -X GET http://localhost:8080/actuator/health
 }
 ```
 
-就緒探針 (readiness probe)
+Readiness Probe
 
 ```bash
 curl -X GET http://localhost:8080/actuator/health/readiness
@@ -1674,7 +1673,7 @@ curl -X GET http://localhost:8080/actuator/health/readiness
 }
 ```
 
-存活探針 (liveness probe)
+Liveness Probe
 
 ```bash
 curl -X GET http://localhost:8080/actuator/health/liveness
@@ -1686,7 +1685,7 @@ curl -X GET http://localhost:8080/actuator/health/liveness
 }
 ```
 
-SBOM 資訊
+SBOM Information
 
 ```bash
 curl -X GET http://localhost:8080/actuator/sbom/application
@@ -1799,7 +1798,7 @@ curl -X GET http://localhost:8080/actuator/sbom/application
 }
 ```
 
-Git 資訊
+Git Information
 
 ```bash
 curl -X GET http://localhost:8080/actuator/info
@@ -1817,50 +1816,50 @@ curl -X GET http://localhost:8080/actuator/info
 }
 ```
 
-### VS Code 套件參考
+### VS Code Extension Recommendations
 
 - [vscjava.vscode-java-pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
 - [vmware.vscode-boot-dev-pack](https://marketplace.visualstudio.com/items?itemName=vmware.vscode-boot-dev-pack)
 - Docker
 
-## 📋 最佳實踐清單
+## 📋 Best Practices Checklist
 
-### 開發階段
+### Development Phase
 
-- [ ] 每次修改 `openapi.yaml` 後執行 `./gradlew clean openApiGenerate`
-- [ ] 新增快取時記得設定合適的 TTL
-- [ ] 為重要的業務邏輯加上 `@Observed` 註解
+- [ ] Run `./gradlew clean openApiGenerate` after modifying `openapi.yaml`
+- [ ] Set appropriate TTL when adding cache
+- [ ] Add `@Observed` annotation to important business logic
 
-### 部署階段
+### Deployment Phase
 
-- [ ] 不同環境使用不同的配置檔案
-- [ ] 敏感資訊使用環境變數或 Secret Manager
-- [ ] 設定合適的追蹤採樣率（正式環境建議 0.1）
+- [ ] Use different configuration files for different environments
+- [ ] Use environment variables or Secret Manager for sensitive information
+- [ ] Set appropriate trace sampling rate (0.1 recommended for production)
 
-## 📚 延伸學習資源
+## 📚 Further Learning Resources
 
-### 官方文件
+### Official Documentation
 
-- [Spring Boot 官方文件](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
-- [OpenTelemetry 文件](https://opentelemetry.io/docs/)
-- [Grafana 文件](https://grafana.com/docs/)
+- [Spring Boot Official Documentation](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
+- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
 
-## 總結
+## Summary
 
-這份手冊展示了如何整合一系列現代化的工具與實踐，來打造一個不只功能完整，同時也兼顧效能、可維護性和可觀測性的 Spring Boot 專案。
+This guide demonstrates how to integrate a series of modern tools and practices to build a Spring Boot project that's not just feature-complete but also considers performance, maintainability, and observability.
 
-對於開發者而言，從「把功能做完」進化到「把品質做好」，關鍵在於有意識地去採用這些現代化的作法：
+For developers, evolving from "getting features done" to "doing quality work" requires consciously adopting these modern practices:
 
-- 擁抱 Java 21 虛擬執行緒，用更簡單的程式碼，換取更高的系統吞吐量
-- 透過 Liquibase 進行資料庫版本控制，確保團隊協作和多環境部署的一致性
-- 實踐 API-First 開發流程，建立清晰的服務契約，加速團隊的平行開發效率
-- 利用 MapStruct 和 Spring Cache 等工具，消除重複的樣板程式碼，並有效提升應用效能
-- 建立全面的可觀測性體系，透過 Micrometer 和 OpenTelemetry 深入了解系統內部行為，將被動的「除錯」，轉變為主動的「效能優化」與「問題預防」
+- Embrace Java 21 virtual threads for simpler code and higher system throughput
+- Use Liquibase for database version control to ensure team collaboration and multi-environment deployment consistency
+- Practice API-First development workflow to establish clear service contracts and accelerate team parallel development
+- Leverage tools like MapStruct and Spring Cache to eliminate repetitive boilerplate code and effectively improve application performance
+- Build comprehensive observability system through Micrometer and OpenTelemetry to deeply understand system internal behavior, transforming passive "debugging" into proactive "performance optimization" and "problem prevention"
 
-**記住：好的程式不只是能跑，更要跑得穩、跑得快、出問題時能快速定位！**
+**Remember: Good programs don't just run - they run stably, run fast, and problems can be quickly located when they occur!**
 
-將這些實踐融入到日常開發中，有助於提升最終產品的品質與開發團隊的生產力。希望這份手冊能為你在打造下一個專案時，提供有用的參考。
+Incorporating these practices into daily development helps improve final product quality and development team productivity. Hope this guide provides useful reference for your next project.
 
 ---
 
-*如果這份手冊對你有幫助，歡迎分享給其他開發者。有問題或建議，也歡迎提出 Issue 或 Pull Request！* 🙌
+*If this guide helped you, feel free to share with other developers. Questions or suggestions? Welcome to raise Issues or Pull Requests!* 🙌
