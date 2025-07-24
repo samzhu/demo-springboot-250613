@@ -150,7 +150,7 @@ graph TB
 ```text
 .
 ├── build.gradle                                         # Gradle 建置腳本，定義專案需要哪些工具和套件
-├── build/generated/openapi/
+├── build/generated/openapi/                             # build 資料夾為編譯時自動建立跟產生相關檔案, 無需手動建立跟管理
 │   └── src/main/java/com/example/demo/
 │       └── interfaces/                                  # 介面層: 所有跟外部系統互動的程式碼都放這裡
 │           ├── api/                                     # - (自動產生) 根據 openapi.yaml 產生的 API 介面
